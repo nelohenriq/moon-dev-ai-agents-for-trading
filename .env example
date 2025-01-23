@@ -12,7 +12,7 @@ SOLANA_PRIVATE_KEY=your_base58_private_key_here
 
 # AI Service Keys
 ANTHROPIC_KEY=your_claude_key_here
-OPENAI_KEY=your_openai_key_here
+OPENAI_KEY=gsk_B1OoHxN5P3syG4i2ZxC0WGdyb3FYtXaKhwxrXYoza6j2u0liDv91re
 
 # twitter keys 
 TWITTER_USERNAME=your_twitter_username_here

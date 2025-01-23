@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 🌙 Moon Dev's API Handler
 Built with love by Moon Dev 🚀
@@ -144,7 +143,6 @@ class MoonDevAPI:
             print(f"💥 Error loading funding rate data: {str(e)}")
             traceback.print_exc()
             return None
-=======
 """
 🌙 Moon Dev's API Handler
 Built with love by Moon Dev 🚀
@@ -420,4 +418,3 @@ if __name__ == "__main__":
     
     print("\n✨ Moon Dev API Test Complete! ✨")
     print("\n💡 Note: Make sure to set MOONDEV_API_KEY in your .env file")
->>>>>>> e413a7bccbdff8619d20487ab7f13ebaf392f064

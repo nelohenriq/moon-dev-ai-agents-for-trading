@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 '''
 nice functions from hyper liquid i can use
 
@@ -217,7 +216,6 @@ def get_market_info():
     except Exception as e:
         print(f"❌ Error getting market info: {str(e)}")
         return None 
-=======
 '''
 nice functions from hyper liquid i can use
 
@@ -597,4 +595,3 @@ if __name__ == "__main__":
     test_funding_rates()  # Now tests individual symbols
     
     print("\n✨ Testing complete! Moon Dev out! 🌙") 
->>>>>>> e413a7bccbdff8619d20487ab7f13ebaf392f064

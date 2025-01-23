@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 🌙 Moon Dev's Focus Agent
 Built with love by Moon Dev 🚀
@@ -332,7 +331,6 @@ if __name__ == "__main__":
         cprint("\n👋 Focus Agent shutting down gracefully...", "yellow")
     except Exception as e:
         cprint(f"\n❌ Fatal error: {str(e)}", "red")
-=======
 """
 🌙 Moon Dev's Focus Agent
 Built with love by Moon Dev 🚀
@@ -716,4 +714,3 @@ if __name__ == "__main__":
         cprint("\n👋 Focus Agent shutting down gracefully...", "yellow")
     except Exception as e:
         cprint(f"\n❌ Fatal error: {str(e)}", "red")
->>>>>>> e413a7bccbdff8619d20487ab7f13ebaf392f064

@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 🐳 Moon Dev's Whale Watcher
 Built with love by Moon Dev 🚀
@@ -557,7 +556,6 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Error in main loop: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
-=======
 """
 🐳 Moon Dev's Whale Watcher
 Built with love by Moon Dev 🚀
@@ -1100,5 +1098,4 @@ if __name__ == "__main__":
         except Exception as e:
             print(f"❌ Error in main loop: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
->>>>>>> e413a7bccbdff8619d20487ab7f13ebaf392f064
             time.sleep(60)  # Sleep for 1 minute on error 

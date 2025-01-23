@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 💰 Moon Dev's Funding Rate Monitor
 Built with love by Moon Dev 🚀
@@ -515,7 +514,6 @@ class FundingAgent(BaseAgent):
 if __name__ == "__main__":
     agent = FundingAgent()
     agent.run()
-=======
 """
 💰 Moon Dev's Funding Rate Monitor
 Built with love by Moon Dev 🚀
@@ -1041,4 +1039,3 @@ class FundingAgent(BaseAgent):
 if __name__ == "__main__":
     agent = FundingAgent()
     agent.run()
->>>>>>> e413a7bccbdff8619d20487ab7f13ebaf392f064

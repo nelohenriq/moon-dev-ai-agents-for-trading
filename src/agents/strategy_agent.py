@@ -7,6 +7,7 @@ from src.config import *
 import json
 from termcolor import cprint
 import anthropic
+import openai
 import os
 import importlib
 import inspect
@@ -51,7 +52,8 @@ class StrategyAgent:
     def __init__(self):
         """Initialize the Strategy Agent"""
         self.enabled_strategies = []
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        #self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.client = openai.OpenAI(base_url="https://api.groq.com/openai/v1", api_key=os.getenv("OPENAI_KEY"))
 
         if ENABLE_STRATEGIES:
             try:

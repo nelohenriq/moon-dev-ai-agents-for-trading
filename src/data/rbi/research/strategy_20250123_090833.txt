@@ -1,0 +1,72 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Market Structure Identification**: Identify external swing points (highs and lows) to determine the directional bias (bullish or bearish).
+   - **Premium and Discount Zones**: Use Fibonacci retracement levels to identify premium (above 50%) and discount (below 50%) zones within the price leg.
+   - **Confluence Areas**: Identify key areas of interest such as order blocks or fair value gaps within the discount zone.
+   - **Multi-Timeframe Analysis**: Use lower timeframes (e.g., 1-minute) to confirm entries when price reaches confluence areas on higher timeframes (e.g., 15-minute).
+
+#### 2. **Entry Rules**
+   - **Step 1: Identify Market Structure**:
+     - Map out external swing highs and lows to determine the current market structure (bullish or bearish).
+     - A bullish structure is confirmed by higher highs and higher lows.
+     - A bearish structure is confirmed by lower highs and lower lows.
+   - **Step 2: Fibonacci Retracement**:
+     - Draw Fibonacci retracement levels from the most recent swing low to swing high (bullish) or swing high to swing low (bearish).
+     - Focus on the discount zone (below 50%) for potential long entries in a bullish structure, or the premium zone (above 50%) for short entries in a bearish structure.
+   - **Step 3: Confluence Areas**:
+     - Identify confluence areas (order blocks or fair value gaps) within the discount or premium zones.
+     - Order Block: A three-candle formation with a bearish candle followed by two bullish candles. The high to low of the bearish candle forms the order block.
+     - Fair Value Gap: A three-candle bullish formation where the wicks of the first and third candles do not meet, creating a gap.
+   - **Step 4: Multi-Timeframe Confirmation**:
+     - When price reaches the confluence area on the higher timeframe (e.g., 15-minute), switch to a lower timeframe (e.g., 1-minute).
+     - Wait for a structural shift on the lower timeframe (e.g., a bullish reversal in a bullish market structure) to confirm the entry.
+
+#### 3. **Exit Rules**
+   - **Take Profit**:
+     - Target the next external swing high (in a bullish structure) or swing low (in a bearish structure).
+     - For partial profits, close 50% of the position at a 5:1 risk-reward ratio.
+     - Let the remaining position run to the full target (next swing high or low).
+   - **Stop Loss**:
+     - Place the stop loss below the confluence area (e.g., below the order block or fair value gap) for long trades.
+     - Place the stop loss above the confluence area for short trades.
+
+#### 4. **Risk Management**
+   - **Position Sizing**:
+     - Risk a fixed percentage of the account per trade (e.g., 1% of a $200,000 account = $2,000 risk per trade).
+   - **Risk-Reward Ratio**:
+     - Aim for a minimum risk-reward ratio of 1:1, with optimal targets of 1:5 or higher.
+   - **Stop Loss Placement**:
+     - Ensure the stop loss is placed at a logical level (e.g., below the confluence area) to minimize risk.
+
+#### 5. **Required Indicators**
+   - **Fibonacci Retracement Tool**: To identify premium and discount zones.
+   - **Order Block and Fair Value Gap Identification**: To locate confluence areas.
+   - **Multi-Timeframe Analysis**: Use higher (e.g., 15-minute) and lower (e.g., 1-minute) timeframes for confirmation.
+
+#### 6. **Trade Execution Example**
+   - **Bullish Example**:
+     - Identify a bullish market structure (higher highs and higher lows).
+     - Draw Fibonacci retracement from the swing low to swing high.
+     - Locate a confluence area (e.g., order block or fair value gap) within the discount zone.
+     - Switch to the 1-minute timeframe and wait for a bullish reversal pattern.
+     - Enter the trade at the confluence area, set the stop loss below the confluence, and target the next swing high.
+   - **Bearish Example**:
+     - Identify a bearish market structure (lower highs and lower lows).
+     - Draw Fibonacci retracement from the swing high to swing low.
+     - Locate a confluence area (e.g., order block or fair value gap) within the premium zone.
+     - Switch to the 1-minute timeframe and wait for a bearish reversal pattern.
+     - Enter the trade at the confluence area, set the stop loss above the confluence, and target the next swing low.
+
+#### 7. **Backtesting Parameters**
+   - **Timeframe**: Primary analysis on 15-minute charts, with confirmation on 1-minute charts.
+   - **Currency Pairs**: Focus on major pairs (e.g., EUR/USD).
+   - **Session**: Pay attention to key market sessions (e.g., London, New York) for increased volatility.
+   - **Trade Frequency**: Execute trades only when all conditions (market structure, confluence, multi-timeframe confirmation) are met.
+
+#### 8. **Performance Metrics**
+   - **Win Rate**: Aim for a win rate of at least 30% with a risk-reward ratio of 1:5 or higher.
+   - **Risk Management**: Ensure no single trade risks more than 1% of the account.
+   - **Profitability**: Track the combination of partial and full take profits to maximize returns.
+
+This strategy combines market structure, Fibonacci retracement, confluence areas, and multi-timeframe analysis to provide high-probability entries with optimal risk-reward ratios. Backtest this strategy on historical data to validate its effectiveness.

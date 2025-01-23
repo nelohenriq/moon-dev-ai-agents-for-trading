@@ -1,0 +1,63 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Objective**: Enhance momentum trading using deep learning to predict stock returns.
+   - **Data**: Use historical stock price data (monthly and daily returns) for US stocks listed on NYSE, AMEX, or Nasdaq.
+   - **Model**: A deep learning model composed of stacked Restricted Boltzmann Machines (RBMs) and a feedforward neural network (FFNN) classifier.
+   - **Input Features**:
+     - 12 monthly returns (from month t-13 to t-2).
+     - 20 daily returns (approximately corresponding to month t).
+     - An indicator variable for January (if the holding period falls in January).
+   - **Output**: Classify stocks into two classes based on predicted returns:
+     - Class 1: Stocks with predicted returns below the median.
+     - Class 2: Stocks with predicted returns above the median.
+
+#### 2. **Entry/Exit Rules**
+   - **Portfolio Formation**:
+     - At the beginning of each month, rank all stocks based on their predicted class 2 probability (probability of being in the top return class).
+     - **Long Position**: Buy stocks in the top decile (10%) of predicted class 2 probabilities.
+     - **Short Position**: Sell stocks in the bottom decile (10%) of predicted class 2 probabilities.
+   - **Holding Period**: Hold the positions for one month.
+   - **Rebalancing**: At the end of each month, close out all positions and repeat the portfolio formation process.
+
+#### 3. **Risk Management**
+   - **Position Sizing**: Equal-weight the long and short positions within the portfolio.
+   - **Stop-Loss**: Not explicitly mentioned in the paper, but consider implementing a stop-loss mechanism to limit losses on individual positions.
+   - **Diversification**: Ensure the portfolio is diversified across multiple stocks to reduce idiosyncratic risk.
+   - **Transaction Costs**: Account for transaction costs, including commissions and slippage, when calculating net returns.
+
+#### 4. **Required Indicators**
+   - **Input Features**:
+     - 12 monthly cumulative returns (normalized by z-score relative to the cross-section of all stocks).
+     - 20 daily cumulative returns (normalized by z-score relative to the cross-section of all stocks).
+     - January indicator variable (1 if the holding period is in January, 0 otherwise).
+   - **Output Indicator**:
+     - Predicted class 2 probability (probability of a stock having above-median returns in the next month).
+
+#### 5. **Backtesting Parameters**
+   - **Training Period**: January 1965 to December 1989.
+   - **Test Period**: January 1990 to December 2009.
+   - **Model Configuration**:
+     - Network architecture: 33-40-4-50-2 (33 input features, 40 units in the first hidden layer, 4 units in the bottleneck layer, 50 units in the penultimate layer, and 2 output classes).
+     - Training method: Layer-wise pretraining of RBMs followed by fine-tuning with backpropagation.
+   - **Performance Metrics**:
+     - Monthly returns for the long and short portfolios.
+     - Annualized returns.
+     - Sharpe ratio.
+     - Maximum drawdown.
+     - Comparison with a basic momentum strategy (using past 12-month returns to form portfolios).
+
+#### 6. **Implementation Notes**
+   - **Data Preprocessing**:
+     - Normalize cumulative returns using z-scores relative to the cross-section of all stocks for each month or day.
+     - Label stocks as class 1 or class 2 based on whether their next-month return is below or above the median.
+   - **Model Training**:
+     - Train the model using the training set (1965-1989) and hold the model parameters fixed during the test period (1990-2009).
+     - Consider updating the model weights periodically to adapt to changing market conditions.
+   - **Computational Considerations**:
+     - Use parallel processing or GPUs to reduce training time, especially if retraining the model periodically.
+
+#### 7. **Expected Results**
+   - The enhanced momentum strategy is expected to outperform the basic momentum strategy, with higher annualized returns (45.93% vs. 10.53%) and a larger spread between the top and bottom decile returns (3.35% vs. 1.10% monthly).
+
+These instructions should provide a clear and detailed framework for backtesting the enhanced momentum trading strategy using deep learning.

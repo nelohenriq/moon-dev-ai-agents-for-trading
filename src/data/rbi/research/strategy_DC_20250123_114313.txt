@@ -1,0 +1,57 @@
+### Capitulation Volume Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+- **Objective**: Identify potential market reversals or trend continuations based on extreme volume spikes (capitulation volume).
+- **Market Condition**: Works best in trending or volatile markets.
+- **Timeframe**: Suitable for intraday, daily, or higher timeframes.
+
+#### 2. **Entry Rules**
+- **Capitulation Volume Signal**:
+  - Look for a significant spike in volume that is at least **2x the average volume** of the last 20 candles.
+  - The price should close near the **low** of the candle for a **bearish capitulation** or near the **high** for a **bullish capitulation**.
+- **Confirmation**:
+  - For a **bullish reversal**: Wait for the next candle to close **above the high** of the capitulation candle.
+  - For a **bearish reversal**: Wait for the next candle to close **below the low** of the capitulation candle.
+- **Trend Filter** (Optional):
+  - Use a **200-period Simple Moving Average (SMA)** to confirm the trend direction.
+    - For a **bullish setup**, ensure the price is above the 200 SMA.
+    - For a **bearish setup**, ensure the price is below the 200 SMA.
+
+#### 3. **Exit Rules**
+- **Take Profit**:
+  - Set a take profit level at **1.5x the average true range (ATR)** of the last 14 candles from the entry point.
+- **Stop Loss**:
+  - Place a stop loss at the **low** of the capitulation candle for a **bullish trade** or the **high** of the capitulation candle for a **bearish trade**.
+- **Trailing Stop** (Optional):
+  - Use a trailing stop of **0.5x ATR** to lock in profits as the trade moves in your favor.
+
+#### 4. **Risk Management**
+- **Position Sizing**:
+  - Risk no more than **1-2% of your trading capital** per trade.
+  - Calculate position size based on the distance between entry and stop loss.
+- **Risk-Reward Ratio**:
+  - Aim for a minimum **1:1.5 risk-reward ratio**.
+
+#### 5. **Required Indicators**
+- **Volume Indicator**:
+  - Use standard volume to identify the capitulation spike.
+- **Average True Range (ATR)**:
+  - Set to 14 periods for measuring volatility and setting take profit/stop loss levels.
+- **Simple Moving Average (SMA)**:
+  - Use a 200-period SMA as a trend filter (optional).
+
+#### 6. **Backtesting Parameters**
+- **Data Requirements**:
+  - Historical price data with volume.
+- **Timeframe**:
+  - Test on multiple timeframes (e.g., 1H, 4H, Daily) to assess strategy robustness.
+- **Performance Metrics**:
+  - Track win rate, average profit/loss per trade, maximum drawdown, and risk-adjusted returns (e.g., Sharpe ratio).
+
+#### 7. **Additional Notes**
+- **Market Context**:
+  - Avoid using the strategy during low-volume or sideways market conditions.
+- **Confirmation**:
+  - Consider adding additional confirmation signals (e.g., RSI divergence, candlestick patterns) to reduce false signals.
+
+These instructions are ready for backtesting. Adjust parameters as needed based on the asset and market conditions.

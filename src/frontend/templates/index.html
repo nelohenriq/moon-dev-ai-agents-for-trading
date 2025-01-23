@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+    <!-- Header with rotating moon -->
+    <header class="container mx-auto px-4 py-4 text-center">
+        <div class="flex justify-center items-center mb-2">
+            <img src="{{ url_for('static', path='/images/moondev.png') }}" alt="Moon Dev" class="w-24 h-24 moon-rotate">
+        </div>
+        <h1 class="text-4xl font-bold mb-1">Moon Dev's RBI Agent 🌙</h1>
+        <p class="text-lg text-gray-400">Research • Backtest • Implement</p>
+    </header>
+
+    <!-- Main content -->
+    <main class="container mx-auto px-4 py-4">
+        <!-- Input form -->
+        <div class="max-w-2xl mx-auto bg-gray-800 rounded-lg p-4 mb-6">
+            <form id="analyzeForm" class="space-y-3" method="POST" action="/analyze">
+                <div>
+                    <label for="links" class="block text-lg text-gray-300 mb-2">
+                        Enter trading strategies for ai agents to build backtests for - more info <a href="https://moondev.com" class="text-purple-400 hover:text-purple-300 hover:underline" target="_blank">here</a> 🚀
+                    </label>
+                    <textarea 
+                        id="links" 
+                        name="links" 
+                        rows="4" 
+                        class="w-full p-3 bg-gray-700 rounded-lg focus:ring-2 focus:ring-purple-500"
+                        placeholder="Enter YouTube URLs, PDF links, or written trading strategies or ideas (one per line). The AI will create the strategy based on the content and then code a backtest & send back the code so you can see if the trading strategy has been profitable in the past"></textarea>
+                </div>
+                <button 
+                    type="submit" 
+                    class="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors flex items-center justify-center space-x-2">
+                    <span class="text-lg">🚀 Launch Agents</span>
+                    <div id="spinner" class="hidden">
+                        <i class="fas fa-moon fa-spin"></i>
+                    </div>
+                </button>
+            </form>
+        </div>
+
+        <!-- Processing Animation -->
+        <div id="processingAnimation" class="max-w-2xl mx-auto hidden">
+            <div class="bg-gray-800/50 rounded-lg p-6 space-y-6">
+                <!-- Research Phase -->
+                <div id="researchPhase" class="processing-phase">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-brain text-2xl phase-icon"></i>
+                        <h3 class="text-lg">Research Agent Analyzing Strategy</h3>
+                    </div>
+                    <div class="progress-messages mt-3 ml-8 space-y-2">
+                        <!-- Messages will be added here -->
+                    </div>
+                </div>
+
+                <!-- Backtest Phase -->
+                <div id="backtestPhase" class="processing-phase">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-chart-line text-2xl phase-icon"></i>
+                        <h3 class="text-lg">Backtest Agent Running Tests</h3>
+                    </div>
+                    <div class="progress-messages mt-3 ml-8 space-y-2">
+                        <!-- Messages will be added here -->
+                    </div>
+                </div>
+
+                <!-- Debug Phase -->
+                <div id="debugPhase" class="processing-phase">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-bug text-2xl phase-icon"></i>
+                        <h3 class="text-lg">Debug Agent Optimizing Code</h3>
+                    </div>
+                    <div class="progress-messages mt-3 ml-8 space-y-2">
+                        <!-- Messages will be added here -->
+                    </div>
+                </div>
+
+                <!-- Fun Message -->
+                <div class="text-center text-purple-400">
+                    <p id="funMessage" class="fun-message">🚀 Preparing for launch to the moon...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results section -->
+        <div id="results" class="max-w-4xl mx-auto space-y-6 hidden">
+            <h2 class="text-2xl font-bold mb-4">🎯 Analysis Results</h2>
+            <div id="resultsContent" class="space-y-6">
+                <!-- Results will be inserted here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="container mx-auto px-4 py-8 text-center text-gray-400">
+        <p>Built with 💜 by Moon Dev</p>
+    </footer>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', path='/js/main.js') }}"></script>
+    <script>
+    document.getElementById('analyzeForm').addEventListener('submit', async (e) => {
+        e.preventDefault(); // Prevent default form submission
+        
+        // Show loading states
+        const spinner = document.getElementById('spinner');
+        const results = document.getElementById('results');
+        const processingAnimation = document.getElementById('processingAnimation');
+        
+        spinner.classList.remove('hidden');
+        results.classList.add('hidden');
+        processingAnimation.classList.remove('hidden');
+        
+        try {
+            const formData = new FormData(e.target);
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            // Show results section
+            results.classList.remove('hidden');
+            const resultsContent = document.getElementById('resultsContent');
+            resultsContent.innerHTML = ''; // Clear previous results
+            
+            if (data.status === 'success') {
+                data.results.forEach(result => updateResult(result));
+            } else {
+                resultsContent.innerHTML = `
+                    <div class="bg-red-900/50 text-red-200 p-6 rounded-lg error-animation">
+                        <h3 class="text-xl font-bold mb-2">❌ Error</h3>
+                        <p>${data.message}</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            results.classList.remove('hidden');
+            resultsContent.innerHTML = `
+                <div class="bg-red-900/50 text-red-200 p-6 rounded-lg error-animation">
+                    <h3 class="text-xl font-bold mb-2">❌ Error</h3>
+                    <p>An unexpected error occurred. Please try again.</p>
+                </div>
+            `;
+        } finally {
+            spinner.classList.add('hidden');
+            processingAnimation.classList.add('hidden');
+        }
+    });
+    </script>
+</body>
+</html> 

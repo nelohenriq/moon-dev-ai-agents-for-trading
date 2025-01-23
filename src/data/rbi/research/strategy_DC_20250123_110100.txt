@@ -1,0 +1,70 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Objective**: Enhance momentum trading using deep learning to predict stock returns.
+   - **Data Source**: US stock data from CRSP (Center for Research in Security Prices).
+   - **Stock Selection**: 
+     - Include ordinary shares traded on NYSE, AMEX, or Nasdaq.
+     - Exclude stocks with monthly closing prices below $5 at portfolio formation.
+   - **Training Period**: January 1965 to December 1989.
+   - **Test Period**: January 1990 to December 2009.
+   - **Input Features**:
+     - 12 monthly returns (months t-2 to t-13).
+     - 20 daily returns (approximately month t).
+     - January indicator variable (1 if holding period is January, else 0).
+   - **Preprocessing**:
+     - Compute cumulative returns for monthly and daily returns.
+     - Normalize cumulative returns using z-scores relative to the cross-section of all stocks for each month/day.
+     - Label stocks with returns below the median as class 1 (losers) and above the median as class 2 (winners).
+
+#### 2. **Entry/Exit Rules**
+   - **Model Prediction**:
+     - Use a deep learning model (stacked autoencoder with RBMs and FFNN classifier) to predict class probabilities (class 1 or class 2) for each stock.
+     - Rank stocks each month by their predicted class 2 probability (probability of being a winner).
+   - **Portfolio Formation**:
+     - **Long Position**: Buy stocks in the top decile (10%) of predicted class 2 probabilities.
+     - **Short Position**: Sell stocks in the bottom decile (10%) of predicted class 2 probabilities.
+   - **Holding Period**: Hold positions for one month.
+   - **Rebalancing**: Close positions at the end of the month and form new long/short portfolios based on updated predictions.
+
+#### 3. **Risk Management**
+   - **Position Sizing**: Equal-weighted positions in the top and bottom deciles.
+   - **Stop-Loss**: Not explicitly mentioned in the strategy, but consider implementing a stop-loss mechanism to limit losses.
+   - **Diversification**: Ensure a diversified portfolio by including multiple stocks in the long and short positions.
+   - **Transaction Costs**: Account for trading costs, slippage, and market impact when calculating returns.
+
+#### 4. **Required Indicators**
+   - **Input Features**:
+     - 12 monthly cumulative returns (normalized z-scores).
+     - 20 daily cumulative returns (normalized z-scores).
+     - January indicator variable.
+   - **Model Output**:
+     - Predicted class 2 probability for each stock.
+   - **Performance Metrics**:
+     - Monthly returns for long and short portfolios.
+     - Annualized returns.
+     - T-statistics for strategy performance.
+
+#### 5. **Backtesting Procedure**
+   - **Data Preparation**:
+     - Load historical stock price data for the specified period.
+     - Preprocess data to compute cumulative returns and normalize using z-scores.
+     - Label stocks based on median returns for the next month.
+   - **Model Training**:
+     - Train the deep learning model (stacked autoencoder with RBMs and FFNN classifier) on the training set (1965-1989).
+     - Use hold-out cross-validation to determine the optimal network architecture.
+   - **Model Testing**:
+     - Apply the trained model to the test set (1990-2009) to predict class probabilities.
+     - Form long and short portfolios based on predicted probabilities.
+     - Calculate monthly returns for the strategy.
+   - **Performance Evaluation**:
+     - Compare the enhanced momentum strategy with the basic momentum strategy (based on past 12-month returns).
+     - Calculate annualized returns, Sharpe ratio, and other relevant performance metrics.
+     - Analyze the source of returns by examining past 12-month and 20-day returns for the long and short portfolios.
+
+#### 6. **Implementation Notes**
+   - **Computational Resources**: Ensure sufficient computational resources for training the deep learning model, especially if using GPUs.
+   - **Model Updates**: Consider updating the model weights periodically to adapt to changing market conditions.
+   - **Parallelization**: Explore parallel implementation of the learning algorithm to reduce training time.
+
+This strategy leverages deep learning to enhance traditional momentum trading, focusing on extracting predictive features from historical price data without extensive manual feature engineering.

@@ -1,0 +1,46 @@
+### Strategy Instructions for Backtesting: VWAP-Based Trading Strategy
+
+#### 1. **Key Strategy Components**
+   - **Indicator**: Volume Weighted Average Price (VWAP)
+   - **Timeframe**: Intraday (e.g., 1-minute, 5-minute, or 15-minute charts)
+   - **Market**: Suitable for liquid markets with consistent volume (e.g., stocks, futures, or forex)
+   - **Objective**: Identify mean-reversion or trend-following opportunities based on price interaction with VWAP.
+
+#### 2. **Entry Rules**
+   - **Mean-Reversion Setup**:
+     1. **Long Entry**: Price crosses below VWAP and then reverses to close above VWAP.
+     2. **Short Entry**: Price crosses above VWAP and then reverses to close below VWAP.
+   - **Trend-Following Setup**:
+     1. **Long Entry**: Price remains above VWAP for a specified number of consecutive candles (e.g., 3 candles).
+     2. **Short Entry**: Price remains below VWAP for a specified number of consecutive candles (e.g., 3 candles).
+
+#### 3. **Exit Rules**
+   - **Take Profit**:
+     1. **Fixed Target**: Set a fixed percentage or point-based target (e.g., 1% or 10 pips).
+     2. **VWAP-Based**: Exit when price reverts to VWAP (for mean-reversion) or when price crosses VWAP (for trend-following).
+   - **Stop Loss**:
+     1. **Fixed Stop**: Set a fixed percentage or point-based stop loss (e.g., 0.5% or 5 pips).
+     2. **VWAP-Based**: Exit if price moves beyond a specified distance from VWAP (e.g., 2x the average true range (ATR) from VWAP).
+
+#### 4. **Risk Management**
+   - **Position Sizing**: Use a fixed percentage of account equity per trade (e.g., 1-2%).
+   - **Risk-Reward Ratio**: Aim for a minimum risk-reward ratio of 1:2.
+   - **Maximum Daily Loss**: Set a daily loss limit (e.g., 5% of account equity) to stop trading for the day if reached.
+
+#### 5. **Required Indicators**
+   - **VWAP**: Volume Weighted Average Price (standard indicator available in most trading platforms).
+   - **Optional Indicators**:
+     - **ATR**: Average True Range (to set dynamic stop-loss levels).
+     - **Volume**: Confirm entry signals with above-average volume.
+
+#### 6. **Backtesting Parameters**
+   - **Time Period**: Test over multiple market conditions (e.g., 6 months to 2 years).
+   - **Data Quality**: Ensure high-quality intraday data with accurate volume.
+   - **Performance Metrics**: Evaluate win rate, average profit/loss per trade, drawdown, and risk-adjusted returns (e.g., Sharpe ratio).
+
+#### 7. **Additional Notes**
+   - **Market Hours**: Focus on high-volume trading hours for better VWAP accuracy.
+   - **Slippage and Commissions**: Account for transaction costs in backtesting.
+   - **Optimization**: Test different parameters (e.g., number of candles for trend confirmation, stop-loss distance) to find optimal settings.
+
+This strategy can be implemented in most backtesting platforms by coding the rules or using built-in VWAP tools. Adjust parameters based on the specific market and timeframe.

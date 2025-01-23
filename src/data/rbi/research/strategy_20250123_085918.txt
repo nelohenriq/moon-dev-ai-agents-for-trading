@@ -1,0 +1,57 @@
+### Strategy Instructions for Backtesting
+
+#### Key Strategy Components:
+1. **Igniting Bars**: Focus on bars that "ignite" or initiate a strong move, typically characterized by clearing out congestion or originating near key moving averages (20 EMA, 200 EMA).
+2. **Elephant Bars**: Look for large, powerful bars (Elephant Bars) that originate near the 20 EMA or 200 EMA and clear out significant price congestion to the left.
+3. **Trend Maturity**: Identify mature trends with multiple legs, as these are less likely to continue strongly and may signal exhaustion.
+4. **Clearing Events**: Bars that wipe out congestion areas before them (clearing events) have a high probability of follow-through (80-90%).
+5. **Exhaustion vs. Continuation**: Determine if a bar is likely to continue the trend (igniting continuation) or signal exhaustion (originating far from the 20 EMA).
+
+---
+
+#### Entry Rules:
+1. **Buy Entry**:
+   - Look for a bullish Elephant Bar that originates near the 20 EMA or 200 EMA.
+   - The bar must clear out congestion to the left, indicating a strong move.
+   - Enter on the close of the bar or the next candle after confirmation.
+
+2. **Sell Entry**:
+   - Look for a bearish Elephant Bar that originates near the 20 EMA or 200 EMA.
+   - The bar must clear out congestion to the left, indicating a strong move.
+   - Enter on the close of the bar or the next candle after confirmation.
+
+---
+
+#### Exit Rules:
+1. **Take Profit**:
+   - Use the concept of follow-through: If the bar has a clearing event, expect an 80-90% probability of continuation.
+   - Set profit targets based on the size of the Elephant Bar or key support/resistance levels.
+
+2. **Stop Loss**:
+   - Place stops below the low of the Elephant Bar for long positions or above the high for short positions.
+   - Adjust stops based on the distance from the 20 EMA or 200 EMA to account for volatility.
+
+---
+
+#### Risk Management:
+1. **Maximum Loss per Trade**: Define a maximum loss per trade (e.g., 1-2% of account equity) and ensure stops are placed accordingly.
+2. **Position Sizing**: Adjust position size based on the distance to the stop loss to maintain consistent risk per trade.
+3. **Avoid Overleveraging**: Do not overleverage, especially in mature trends where follow-through may be limited.
+
+---
+
+#### Required Indicators:
+1. **20 EMA**: Use the 20-period Exponential Moving Average to identify origination points for Elephant Bars.
+2. **200 EMA**: Use the 200-period Exponential Moving Average to confirm long-term trend alignment.
+3. **Price Action**: Focus on price action and congestion areas to identify clearing events and follow-through potential.
+
+---
+
+#### Additional Notes:
+- **Practice and Data Collection**: Create folders for "Igniting" and "Exhaustion" examples to study and internalize the patterns.
+- **Trend Maturity Awareness**: Avoid entering trades in highly mature trends, as follow-through is less likely.
+- **No 100% Guarantees**: Always use stops and risk management, as no strategy is 100% accurate.
+
+---
+
+These instructions are designed for backtesting the strategy using historical data. Adjust parameters as needed based on the asset and timeframe being tested.

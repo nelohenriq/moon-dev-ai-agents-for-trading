@@ -1,0 +1,104 @@
+### Swing Trading Strategy Instructions for Backtesting
+
+#### **1. Key Strategy Components**
+- **Objective**: Capture multi-day to multi-week price movements by identifying breakouts and riding the trend using technical analysis.
+- **Focus**: Large-cap stocks (market cap > $1 billion) with high liquidity (volume > 500k).
+- **Timeframe**: Daily and weekly charts for analysis; 5-minute or 15-minute charts for execution.
+- **Indicators**:
+  - **8 EMA (Exponential Moving Average)**: Momentum indicator to identify uptrends and breakouts.
+  - **200 SMA (Simple Moving Average)**: Long-term trend filter; only trade stocks above the 200 SMA.
+  - **Volume**: Confirms breakout strength and momentum.
+
+---
+
+#### **2. Entry Rules**
+1. **Stock Selection**:
+   - Use a scanner to identify large-cap stocks (>$1 billion market cap) with:
+     - Price > $1 per share.
+     - Volume > 500k by midday (after 11:00 AM Eastern Time).
+     - Positive price movement (>3% on the day).
+   - Ensure the stock is above the 200 SMA on the daily chart.
+
+2. **Chart Pattern Analysis**:
+   - Look for **breakout patterns**:
+     - Stock must break above a key resistance level that has been tested at least 2-3 times.
+     - Stock should be trending along or reclaiming the 8 EMA.
+   - Avoid stocks below the 200 SMA or those in a downtrend.
+
+3. **Entry Point**:
+   - Enter as close to the 8 EMA as possible after a breakout.
+   - Ideal entry is during a pullback to the 8 EMA after the initial breakout.
+   - Avoid chasing breakouts far above the 8 EMA.
+
+---
+
+#### **3. Exit Rules**
+1. **Take Profit**:
+   - Sell in partial sizes (e.g., 25% at a time) as the stock moves higher.
+   - Trail the remaining position along the 8 EMA.
+   - Exit fully if the stock shows signs of reversal (e.g., breaks below the 8 EMA or loses momentum).
+
+2. **Stop Loss**:
+   - Set the stop loss below the 8 EMA.
+   - If the stock closes below the 8 EMA, exit the trade.
+
+---
+
+#### **4. Risk Management**
+- **Position Sizing**:
+  - Risk no more than 1-2% of your account per trade.
+  - Adjust position size based on the distance between entry and stop loss.
+- **Diversification**:
+  - Avoid over-concentration in a single stock or sector.
+- **Stop Loss Discipline**:
+  - Always adhere to the stop loss below the 8 EMA to limit losses.
+
+---
+
+#### **5. Required Indicators**
+1. **8 EMA**:
+   - Used to identify momentum and trend direction.
+   - Acts as a dynamic support level for entries and exits.
+2. **200 SMA**:
+   - Filters out weak stocks; only trade stocks above the 200 SMA.
+3. **Volume**:
+   - Confirms breakout strength; higher volume increases the likelihood of a sustained move.
+
+---
+
+#### **6. Backtesting Steps**
+1. **Data Collection**:
+   - Gather historical daily and weekly price data for large-cap stocks.
+   - Ensure data includes volume and moving averages (8 EMA, 200 SMA).
+
+2. **Scan for Breakouts**:
+   - Identify stocks that broke above key resistance levels with volume confirmation.
+   - Ensure the stock was above the 200 SMA at the time of the breakout.
+
+3. **Simulate Entries**:
+   - Enter trades as close to the 8 EMA as possible after a breakout.
+   - Record entry price, stop loss, and position size.
+
+4. **Simulate Exits**:
+   - Sell in partial sizes as the stock moves higher.
+   - Exit fully if the stock closes below the 8 EMA.
+
+5. **Analyze Results**:
+   - Calculate win rate, average profit/loss per trade, and risk-reward ratio.
+   - Identify patterns in winning and losing trades to refine the strategy.
+
+---
+
+#### **7. Example Trade Setup**
+- **Stock**: Large-cap stock (e.g., GOOG, TSLA).
+- **Chart**: Daily timeframe.
+- **Setup**:
+  - Stock breaks above a key resistance level (tested 2-3 times).
+  - Stock is trending along the 8 EMA and above the 200 SMA.
+  - Volume spikes confirm the breakout.
+- **Entry**: Buy near the 8 EMA after the breakout.
+- **Exit**: Sell in partial sizes as the stock moves higher; stop loss below the 8 EMA.
+
+---
+
+This strategy is designed for simplicity and consistency, focusing on high-probability setups with clear risk management rules. Backtest thoroughly to validate its effectiveness before live trading.

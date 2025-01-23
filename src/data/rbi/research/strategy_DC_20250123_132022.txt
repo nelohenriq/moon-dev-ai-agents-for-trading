@@ -1,0 +1,57 @@
+### Strategy Instructions for Backtesting: VWAP-Based Trading Strategy
+
+#### 1. **Key Strategy Components**
+   - **Indicator**: Volume-Weighted Average Price (VWAP).
+   - **Timeframe**: Intraday (e.g., 1-minute, 5-minute, or 15-minute charts).
+   - **Market**: Suitable for liquid markets (e.g., stocks, futures, or forex).
+   - **Objective**: Identify mean-reversion or trend-following opportunities based on price interaction with VWAP.
+
+#### 2. **Entry Rules**
+   - **Bullish Entry**:
+     - Price crosses above VWAP.
+     - Confirmation: Volume should be above average for the session.
+     - Optional: Add a momentum filter (e.g., RSI > 50 or MACD histogram turning positive).
+   - **Bearish Entry**:
+     - Price crosses below VWAP.
+     - Confirmation: Volume should be above average for the session.
+     - Optional: Add a momentum filter (e.g., RSI < 50 or MACD histogram turning negative).
+
+#### 3. **Exit Rules**
+   - **Take Profit**:
+     - Fixed percentage or points-based target (e.g., 1% or 10 pips).
+     - Alternatively, exit when price reverts to VWAP.
+   - **Stop Loss**:
+     - Fixed percentage or points-based stop (e.g., 0.5% or 5 pips).
+     - Alternatively, exit if price moves beyond a predefined distance from VWAP (e.g., 2x the average true range).
+
+#### 4. **Risk Management**
+   - **Position Sizing**:
+     - Risk no more than 1-2% of account equity per trade.
+   - **Trailing Stop**:
+     - Use a trailing stop based on VWAP (e.g., exit if price moves 1 ATR away from VWAP).
+   - **Session Reset**:
+     - Reset VWAP at the start of each trading session (e.g., 9:30 AM for US markets).
+
+#### 5. **Required Indicators**
+   - **VWAP**: Volume-Weighted Average Price.
+   - **Volume**: To confirm entry signals.
+   - **Optional Filters**:
+     - RSI (Relative Strength Index) for momentum confirmation.
+     - MACD (Moving Average Convergence Divergence) for trend confirmation.
+     - ATR (Average True Range) for stop-loss and trailing stop calculations.
+
+#### 6. **Backtesting Parameters**
+   - **Time Period**: Test over multiple market conditions (e.g., trending, ranging, volatile).
+   - **Data Granularity**: Use intraday data (1-minute or 5-minute intervals).
+   - **Performance Metrics**:
+     - Win rate, profit factor, drawdown, and Sharpe ratio.
+   - **Optimization**:
+     - Test different take-profit and stop-loss levels.
+     - Experiment with optional filters (e.g., RSI thresholds, MACD settings).
+
+#### 7. **Additional Notes**
+   - Avoid trading during low-volume periods (e.g., lunch hours).
+   - Consider combining VWAP with other intraday indicators (e.g., Bollinger Bands, moving averages) for enhanced signals.
+   - Ensure data includes accurate volume information for VWAP calculation.
+
+These instructions are ready for backtesting implementation.

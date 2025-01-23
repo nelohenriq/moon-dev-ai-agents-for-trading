@@ -1,0 +1,72 @@
+**Strategy Instructions for Backtesting**  
+
+### **1. Key Strategy Components**  
+- **Market Structure**:  
+  - Identify **external swing points** (higher highs/lows for bullish trends, lower highs/lows for bearish trends).  
+  - **Change of Character (ChoCh)**: Shift from bearish to bullish (break of prior swing high) or vice versa (break of prior swing low).  
+- **Price Zones**:  
+  - **Discount Zone**: Fibonacci retracement levels **below 0.5** (entry zone for bullish trades).  
+  - **Premium Zone**: Fibonacci retracement levels **above 0.5** (entry zone for bearish trades).  
+- **Confluences**:  
+  - **Order Blocks**: 3-candle formation (bearish → bullish → bullish) marking institutional interest.  
+  - **Fair Value Gaps (FVGs)**: 3-candle formation with a gap between wicks, indicating imbalance.  
+- **Multi-Timeframe Analysis**:  
+  - **Higher timeframe (HTF)**: 15M/1H for trend direction and key levels.  
+  - **Lower timeframe (LTF)**: 1M/5M for entry triggers.  
+
+---
+
+### **2. Entry Rules**  
+#### **Bullish Entry**:  
+1. **HTF Setup**:  
+   - Confirm **bullish market structure** (higher highs/lows).  
+   - Draw Fibonacci retracement (0–100%) from swing low to swing high.  
+   - Identify **discount zone** (below 0.5) with confluence (order block/FVG).  
+2. **LTF Trigger**:  
+   - Wait for price to reach the discount zone.  
+   - Confirm **bullish shift** on LTF (break of LTF swing high + pullback).  
+   - Enter long at retest of LTF confluence (e.g., FVG/order block).  
+
+#### **Bearish Entry**:  
+1. **HTF Setup**:  
+   - Confirm **bearish market structure** (lower highs/lows).  
+   - Draw Fibonacci retracement (0–100%) from swing high to swing low.  
+   - Identify **premium zone** (above 0.5) with confluence (order block/FVG).  
+2. **LTF Trigger**:  
+   - Wait for price to reach the premium zone.  
+   - Confirm **bearish shift** on LTF (break of LTF swing low + pullback).  
+   - Enter short at retest of LTF confluence.  
+
+---
+
+### **3. Exit Rules**  
+- **Take Profit (TP)**:  
+  - **TP1**: Close 50% of position at **5:1 risk-reward** (distance from entry to stop loss × 5).  
+  - **TP2**: Trail remaining position to **next HTF swing point** (e.g., prior swing low for bullish trades).  
+- **Stop Loss (SL)**:  
+  - Place SL **below the LTF confluence** (e.g., below FVG/order block for longs) or **beyond the HTF swing low/high**.  
+
+---
+
+### **4. Risk Management**  
+- **Position Sizing**: Risk **1% per trade** (e.g., $1,000 risk on a $100,000 account).  
+- **SL Placement**:  
+  - For longs: SL below LTF confluence or HTF swing low.  
+  - For shorts: SL above LTF confluence or HTF swing high.  
+- **Avoid Internal Structure Traps**: Only trade external swing breaks confirmed by ChoCh.  
+
+---
+
+### **5. Required Indicators**  
+1. **Fibonacci Retracement Tool**: To define discount/premium zones.  
+2. **Order Blocks**: Marked as 3-candle reversal patterns on HTF.  
+3. **Fair Value Gaps (FVGs)**: Identified as 3-candle imbalances on HTF/LTF.  
+4. **Swing Points**: Manually marked external highs/lows.  
+
+---
+
+**Backtest Execution Logic**:  
+1. Filter trades by HTF trend and ChoCh.  
+2. Trigger entries only in discount/premium zones with LTF confirmation.  
+3. Validate SL/TP rules and risk-reward ratios.  
+4. Track performance metrics (win rate, max drawdown, profit factor).

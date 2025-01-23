@@ -1,0 +1,74 @@
+**Strategy Instructions for Backtesting**  
+
+---
+
+### **1. Key Strategy Components**  
+- **Market Structure (MS) Identification**:  
+  - Define **swing highs** (peaks) and **swing lows** (troughs) on the chart.  
+  - **Bullish MS**: Higher highs (HH) and higher lows (HL).  
+  - **Bearish MS**: Lower highs (LH) and lower lows (LL).  
+  - **Change of Character (ChoCh)**: Break of a prior swing high (bullish reversal) or swing low (bearish reversal).  
+
+- **Fibonacci Retracement**:  
+  - Draw from the **swing low to swing high** (bullish trend) or **swing high to swing low** (bearish trend).  
+  - Key levels: **0.5 (midpoint)**, 0.618, and 0.786.  
+  - **Discount Zone**: Below 0.5 (buy zone in bullish MS, sell zone in bearish MS).  
+  - **Premium Zone**: Above 0.5 (avoid entries).  
+
+- **Confluence Zones**:  
+  - **Order Blocks (OB)**: 3-candle pattern (bearish → bullish → bullish) marking institutional buying/selling areas.  
+  - **Fair Value Gaps (FVG)**: 3-candle pattern with a price gap between wicks (bullish/bearish imbalance).  
+
+- **Multi-Timeframe Analysis**:  
+  - **Primary TF** (e.g., 15m): Determine trend and MS.  
+  - **Lower TF** (e.g., 1m): Refine entry triggers.  
+
+---
+
+### **2. Entry Rules**  
+#### **Long Entries (Bullish MS)**:  
+1. Confirm **bullish MS** (HH + HL).  
+2. Wait for pullback into **discount zone** (below 0.5 Fibonacci).  
+3. Identify **confluence** (OB or FVG) within the discount zone.  
+4. Switch to **lower TF** (1m):  
+   - Look for **bullish MS shift** (LH → HL break).  
+   - Enter at the **close of a bullish candle** confirming the reversal.  
+
+#### **Short Entries (Bearish MS)**:  
+1. Confirm **bearish MS** (LH + LL).  
+2. Wait for pullback into **discount zone** (above 0.5 Fibonacci).  
+3. Identify **confluence** (OB or FVG) within the discount zone.  
+4. Switch to **lower TF** (1m):  
+   - Look for **bearish MS shift** (HL → LH break).  
+   - Enter at the **close of a bearish candle** confirming the reversal.  
+
+---
+
+### **3. Exit Rules**  
+- **Take Profit (TP)**:  
+  - **TP1**: 5x risk (close 50% of position).  
+  - **TP2**: Target next swing high (bullish) or swing low (bearish).  
+- **Stop Loss (SL)**:  
+  - Place **below the confluence zone** (e.g., below OB/FVG low for longs; above OB/FVG high for shorts).  
+  - Maximum SL: Beyond the prior swing low (longs) or swing high (shorts).  
+
+---
+
+### **4. Risk Management**  
+- **Position Sizing**:  
+  - Risk ≤1% of capital per trade.  
+  - Calculate lot size based on distance between entry and SL.  
+- **Partial Closing**: Close 50% of position at TP1 (5:1 reward).  
+- **Trend Reversal**: Exit fully if ChoCh invalidates MS (e.g., prior swing low broken in bullish trend).  
+
+---
+
+### **5. Required Indicators**  
+1. **Fibonacci Retracement Tool** (0.5, 0.618, 0.786).  
+2. **Order Blocks** (highlighted on chart).  
+3. **Fair Value Gaps** (highlighted on chart).  
+4. **Swing High/Low Markers** (manual or automated).  
+
+---
+
+**Backtest Execution**: Apply rules to historical data, validate win rate, risk-reward ratio, and consistency across bullish/bearish cycles.

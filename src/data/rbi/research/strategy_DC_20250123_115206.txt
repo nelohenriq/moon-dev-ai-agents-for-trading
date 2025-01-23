@@ -1,0 +1,73 @@
+### Strategy Instructions for Backtesting: VWAP Volume Spike
+
+#### 1. **Key Strategy Components**
+   - **Indicator**: Volume-Weighted Average Price (VWAP) and Volume Spike.
+   - **Timeframe**: Intraday (e.g., 1-minute, 5-minute, or 15-minute charts).
+   - **Market**: Suitable for liquid assets with high trading volume (e.g., stocks, futures, or forex).
+   - **Objective**: Identify significant volume spikes relative to VWAP to capture momentum-driven price movements.
+
+---
+
+#### 2. **Entry Rules**
+   - **Volume Spike Condition**:
+     - Calculate the average volume over the last `N` periods (e.g., 20 periods).
+     - A volume spike occurs when the current volume exceeds the average volume by a predefined threshold (e.g., 2x or 3x).
+   - **Price Relative to VWAP**:
+     - For a **Long Entry**: Price must be above the VWAP line.
+     - For a **Short Entry**: Price must be below the VWAP line.
+   - **Confirmation**:
+     - Wait for a candle close above/below VWAP after the volume spike to confirm the entry.
+
+---
+
+#### 3. **Exit Rules**
+   - **Take Profit**:
+     - Set a fixed percentage or point-based target (e.g., 1% or 10 pips).
+     - Alternatively, exit when price crosses back below/above VWAP.
+   - **Stop Loss**:
+     - Place a stop loss below the recent swing low (for long) or above the recent swing high (for short).
+     - Alternatively, use a fixed percentage or point-based stop loss (e.g., 0.5% or 5 pips).
+   - **Time-Based Exit**:
+     - Exit the trade if the target or stop loss is not hit within a predefined time window (e.g., 30 minutes).
+
+---
+
+#### 4. **Risk Management**
+   - **Position Sizing**:
+     - Risk no more than 1-2% of the account balance per trade.
+   - **Risk-Reward Ratio**:
+     - Aim for a minimum risk-reward ratio of 1:2 (e.g., 1% risk for 2% reward).
+   - **Maximum Daily Loss**:
+     - Set a daily loss limit (e.g., 5% of the account balance) to prevent overtrading.
+
+---
+
+#### 5. **Required Indicators**
+   - **VWAP**: Volume-Weighted Average Price.
+   - **Volume**: Standard volume indicator.
+   - **Average Volume**: Calculate the average volume over a specified period (e.g., 20 periods).
+
+---
+
+#### 6. **Backtesting Parameters**
+   - **Timeframe**: 1-minute, 5-minute, or 15-minute charts.
+   - **Data Range**: At least 3 months of intraday data for robust testing.
+   - **Volume Spike Threshold**: Test multiples of average volume (e.g., 2x, 3x).
+   - **VWAP Period**: Use the default VWAP calculation (cumulative volume and price).
+   - **Trade Filters**:
+     - Exclude trades during low-volume periods (e.g., first and last 30 minutes of the trading session).
+
+---
+
+#### 7. **Optimization Suggestions**
+   - Test different volume spike thresholds (e.g., 1.5x, 2x, 3x).
+   - Experiment with varying stop loss and take profit levels.
+   - Adjust the average volume period (e.g., 10, 20, or 50 periods).
+   - Test the strategy across different asset classes and timeframes.
+
+---
+
+#### 8. **Additional Notes**
+   - Ensure the backtest accounts for slippage and trading fees.
+   - Validate the strategy on out-of-sample data to confirm robustness.
+   - Monitor for false signals during high-impact news events or low-liquidity periods.

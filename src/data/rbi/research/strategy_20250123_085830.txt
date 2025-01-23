@@ -1,0 +1,45 @@
+### Bullish Momentum Pattern Trading Strategy Instructions
+
+#### 1. **Key Strategy Components**
+   - **Pattern Type**: Bullish Momentum (continuation or reversal pattern, primarily continuation).
+   - **Trend Requirement**: Prefer an uptrend before the pattern, followed by a sideways/consolidation phase (slightly upward, sideways, or slightly downward).
+   - **Candlestick Characteristics**: 
+     - Strong green candle with a long real body.
+     - Shorter wicks preferred, but longer wicks are acceptable.
+     - The real body of the momentum candle must be **at least twice the size** of the real bodies of the **previous three candles**.
+
+#### 2. **Entry Rules**
+   - **Entry Point**: Enter at the **close of the momentum candle**.
+     - Avoid waiting for confirmation as the price may already be too high.
+   - **Confirmation**: Ensure the momentum candle meets the size requirement (2x larger than the previous three candles).
+
+#### 3. **Exit Rules**
+   - **Take Profit (Target)**:
+     - **Method 1**: Measure the length from the entry point to the stop-loss level and apply a **2:1 risk-reward ratio**.
+     - **Method 2**: Measure the height of the consolidation/ascending triangle pattern and project it upward from the breakout point.
+   - **Stop-Loss**:
+     - Place the stop-loss **just below the most recent low** (considering the market structure, e.g., ascending triangle).
+     - Leave some wiggle room to account for market noise.
+
+#### 4. **Risk Management**
+   - **Position Sizing**: Use a fixed percentage of your trading capital (e.g., 1-2% per trade).
+   - **Stop-Loss Placement**: Ensure the stop-loss is placed at a logical level (e.g., below the recent low in an ascending triangle).
+   - **Risk-Reward Ratio**: Aim for a minimum of **2:1** or higher.
+
+#### 5. **Required Indicators**
+   - **Candlestick Chart**: To identify the momentum candle and compare its size with previous candles.
+   - **Trend Identification**: Use price action or a moving average (e.g., 50-period SMA) to confirm the uptrend.
+   - **Support/Resistance Levels**: Identify key levels (e.g., resistance in an ascending triangle) to validate the pattern.
+
+#### 6. **Additional Notes**
+   - **Ascending Triangle Context**: If the pattern forms within an ascending triangle, treat it as such and use triangle-specific rules for stop-loss and target placement.
+   - **Avoid False Signals**: Ensure the momentum candle is not just a strong candle but meets the 2x size requirement compared to the previous three candles.
+   - **Bearish Momentum**: Similar rules apply for bearish momentum candles (strong red candle, 2x larger than previous three candles).
+
+---
+
+These instructions are ready for backtesting. Ensure the backtest includes the following:
+- Identification of the momentum candle based on size comparison.
+- Entry at the close of the momentum candle.
+- Stop-loss placement below the most recent low.
+- Take profit based on either 2:1 risk-reward or triangle height projection.

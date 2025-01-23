@@ -1,0 +1,61 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Market Structure Identification**: Identify external swing highs and lows to determine the directional bias (bullish or bearish).
+   - **Premium and Discount Zones**: Use Fibonacci retracement levels to define premium (above 50%) and discount (below 50%) zones.
+   - **Confluence Areas**: Identify order blocks or fair value gaps within the discount zone for high-probability entries.
+   - **Multi-Timeframe Analysis**: Use a higher timeframe (e.g., 15-minute) for overall market structure and a lower timeframe (e.g., 1-minute) for precise entry triggers.
+
+#### 2. **Entry Rules**
+   - **Step 1: Identify Market Structure**
+     - Mark external swing highs and lows.
+     - Confirm bullish structure (higher highs and higher lows) or bearish structure (lower highs and lower lows).
+   - **Step 2: Define Premium and Discount Zones**
+     - Use Fibonacci retracement tool from the most recent swing low to swing high.
+     - Discount zone: Below 50% retracement level.
+   - **Step 3: Locate Confluence Areas**
+     - Identify order blocks or fair value gaps within the discount zone.
+     - Order Block: A three-candle formation with aggressive momentum.
+     - Fair Value Gap: A gap between the wicks of three candles indicating strong buying or selling pressure.
+   - **Step 4: Multi-Timeframe Confirmation**
+     - Wait for price to enter the discount zone and confluence area on the higher timeframe.
+     - Switch to the lower timeframe (e.g., 1-minute) and wait for a structural shift (e.g., bullish reversal for a long trade).
+     - Enter the trade when the lower timeframe confirms the reversal.
+
+#### 3. **Exit Rules**
+   - **Take Profit**: Target the next external swing high (for long trades) or swing low (for short trades).
+   - **Partial Profit**: Close 50% of the position at a 5:1 risk-reward ratio.
+   - **Stop Loss**: Place the stop loss below the confluence area (e.g., below the order block or fair value gap).
+
+#### 4. **Risk Management**
+   - **Risk per Trade**: Risk no more than 1% of the account per trade.
+   - **Risk-Reward Ratio**: Aim for a minimum of 1:2 risk-reward ratio, with potential for higher ratios (e.g., 1:5 or 1:7).
+   - **Stop Loss Placement**: Place the stop loss below the confluence area to minimize risk.
+
+#### 5. **Required Indicators**
+   - **Fibonacci Retracement Tool**: To define premium and discount zones.
+   - **Price Action**: To identify swing highs, swing lows, order blocks, and fair value gaps.
+   - **Multi-Timeframe Analysis**: Use a higher timeframe (e.g., 15-minute) for market structure and a lower timeframe (e.g., 1-minute) for entry confirmation.
+
+#### 6. **Trade Execution Example**
+   - **Bullish Trade**:
+     1. Identify a higher high and higher low on the 15-minute chart.
+     2. Draw Fibonacci retracement from the swing low to the swing high.
+     3. Locate an order block or fair value gap within the discount zone.
+     4. Switch to the 1-minute chart and wait for a bullish reversal pattern.
+     5. Enter the trade at the confluence area with a stop loss below the order block.
+     6. Target the next swing high for take profit.
+   - **Bearish Trade**:
+     1. Identify a lower high and lower low on the 15-minute chart.
+     2. Draw Fibonacci retracement from the swing high to the swing low.
+     3. Locate an order block or fair value gap within the premium zone.
+     4. Switch to the 1-minute chart and wait for a bearish reversal pattern.
+     5. Enter the trade at the confluence area with a stop loss above the order block.
+     6. Target the next swing low for take profit.
+
+#### 7. **Additional Notes**
+   - **Change of Character**: If a swing high or low is broken, it indicates a potential shift in market structure. Adjust the directional bias accordingly.
+   - **Internal vs. External Structure**: Avoid trading internal price movements; focus on external breakouts for higher accuracy.
+   - **Trade Refinement**: Use multi-timeframe analysis to refine entries and improve risk-reward ratios.
+
+This strategy combines market structure, Fibonacci levels, confluence areas, and multi-timeframe analysis to provide high-probability trading opportunities with controlled risk.

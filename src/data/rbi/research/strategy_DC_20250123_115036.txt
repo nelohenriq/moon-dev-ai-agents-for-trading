@@ -1,0 +1,74 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Objective**: Enhance momentum trading strategies using deep learning (stacked autoencoders with Restricted Boltzmann Machines (RBMs)) to predict stock returns.
+   - **Input Data**: 
+     - **Monthly Returns**: 12 months of historical monthly returns (from month t-13 to t-2).
+     - **Daily Returns**: 20 days of historical daily returns (approximately corresponding to month t).
+     - **January Indicator**: Binary variable indicating if the holding period (month t+1) falls in January.
+   - **Preprocessing**:
+     - Compute cumulative returns for both monthly and daily returns.
+     - Normalize cumulative returns using z-scores relative to the cross-section of all stocks for each month/day.
+     - Label stocks as class 1 (below median return) or class 2 (above median return) based on returns in month t+1.
+   - **Model Architecture**:
+     - Stacked autoencoder with RBMs: 33 input features → 40 hidden units → 4 bottleneck units → 50 hidden units → 2 output classes.
+     - Feedforward neural network (FFNN) classifier for final prediction.
+
+#### 2. **Entry/Exit Rules**
+   - **Portfolio Formation**:
+     - Rank stocks each month based on the predicted probability of being in class 2 (high return).
+     - **Long Position**: Buy stocks in the top decile (10%) of predicted class 2 probabilities.
+     - **Short Position**: Sell stocks in the bottom decile (10%) of predicted class 2 probabilities.
+   - **Holding Period**:
+     - Hold positions for one month (month t+1).
+     - Close positions at the end of the holding period and rebalance the portfolio.
+   - **Rebalancing**:
+     - Repeat the ranking and portfolio formation process monthly.
+
+#### 3. **Risk Management**
+   - **Position Sizing**:
+     - Equal weighting for all stocks in the long and short portfolios.
+   - **Stop-Loss**:
+     - No explicit stop-loss rule; positions are held for the full month regardless of intra-month performance.
+   - **Diversification**:
+     - Portfolio includes a diversified set of stocks across deciles to mitigate individual stock risk.
+   - **Exclusion Criteria**:
+     - Exclude stocks with monthly closing prices below $5 to reduce noise and extreme returns.
+
+#### 4. **Required Indicators**
+   - **Input Features**:
+     - 12 months of historical monthly returns (t-13 to t-2).
+     - 20 days of historical daily returns (approximately month t).
+     - January indicator (binary variable).
+   - **Preprocessing**:
+     - Cumulative returns for monthly and daily data.
+     - Z-score normalization of cumulative returns.
+   - **Model Output**:
+     - Predicted probability of being in class 2 (high return) for each stock.
+   - **Performance Metrics**:
+     - Monthly returns for long and short portfolios.
+     - Annualized returns for the strategy.
+     - T-statistics for strategy performance.
+
+#### 5. **Backtesting Parameters**
+   - **Training Period**: January 1965 to December 1989.
+   - **Test Period**: January 1990 to December 2009.
+   - **Rebalancing Frequency**: Monthly.
+   - **Portfolio Size**: Top and bottom 10% of stocks based on predicted probabilities.
+   - **Performance Benchmark**: Compare against a basic momentum strategy (using past 12-month returns).
+
+#### 6. **Implementation Notes**
+   - **Model Training**:
+     - Train the stacked autoencoder and FFNN classifier on the training set (1965-1989).
+     - Use hold-out cross-validation to determine the optimal network architecture.
+   - **Model Testing**:
+     - Test the model on the out-of-sample period (1990-2009) without updating model weights.
+   - **Computational Considerations**:
+     - Use mini-batch training for RBMs and backpropagation for fine-tuning.
+     - Consider parallelization or GPU acceleration for faster training.
+
+#### 7. **Expected Output**
+   - **Monthly Returns**: Time series of monthly returns for the enhanced momentum strategy.
+   - **Annualized Returns**: Annualized return of the strategy over the test period.
+   - **Cumulative Wealth**: Growth of $1 invested in the strategy over the test period.
+   - **Comparison**: Performance comparison against the basic momentum strategy.

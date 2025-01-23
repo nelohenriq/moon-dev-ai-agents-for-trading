@@ -1,0 +1,64 @@
+### Strategy Instructions for Backtesting: VWAP-Based Trading Strategy
+
+#### 1. **Key Strategy Components**
+   - **Indicator**: Volume Weighted Average Price (VWAP).
+   - **Timeframe**: Intraday (e.g., 1-minute, 5-minute, or 15-minute charts).
+   - **Market**: Suitable for liquid markets with consistent volume (e.g., stocks, futures, or forex).
+   - **Objective**: Identify mean-reversion or trend-following opportunities based on price interaction with VWAP.
+
+#### 2. **Entry Rules**
+   - **Mean-Reversion Entry**:
+     - Buy when the price crosses **below** the VWAP and then **reverts back above** it.
+     - Sell when the price crosses **above** the VWAP and then **reverts back below** it.
+   - **Trend-Following Entry**:
+     - Buy when the price is **above** the VWAP and continues to make higher highs.
+     - Sell when the price is **below** the VWAP and continues to make lower lows.
+   - **Confirmation**:
+     - Use a **volume filter**: Ensure volume is above a specified threshold (e.g., 20% above the average volume for the session).
+     - Use a **price filter**: Ensure the price moves at least X pips/points away from the VWAP before entry.
+
+#### 3. **Exit Rules**
+   - **Take Profit**:
+     - Set a fixed profit target (e.g., 1x ATR or a percentage of the average daily range).
+     - Alternatively, exit when the price crosses back to the VWAP.
+   - **Stop Loss**:
+     - Place a stop loss below the recent swing low (for long trades) or above the recent swing high (for short trades).
+     - Alternatively, use a fixed stop loss (e.g., 1x ATR or a percentage of the entry price).
+   - **Time-Based Exit**:
+     - Exit all positions at the end of the trading session (e.g., market close).
+
+#### 4. **Risk Management**
+   - **Position Sizing**:
+     - Risk no more than 1-2% of the account balance per trade.
+     - Calculate position size based on the distance between entry and stop loss.
+   - **Maximum Drawdown**:
+     - Set a daily or weekly drawdown limit (e.g., 5% of the account balance).
+   - **Trade Frequency**:
+     - Limit the number of trades per session to avoid overtrading.
+
+#### 5. **Required Indicators**
+   - **VWAP**: Volume Weighted Average Price.
+   - **ATR (Average True Range)**: For setting stop loss and take profit levels.
+   - **Volume Indicator**: To confirm entry signals and filter low-volume trades.
+   - **Moving Average (Optional)**: Use a short-term moving average (e.g., 9-period) to confirm trends.
+
+#### 6. **Backtesting Parameters**
+   - **Time Period**: Test over multiple market conditions (e.g., 6 months to 2 years).
+   - **Asset Selection**: Test on at least 5-10 different liquid assets.
+   - **Slippage and Commissions**: Include realistic slippage and commission costs.
+   - **Session Hours**: Restrict trading to specific hours (e.g., 9:30 AM to 4:00 PM for stocks).
+
+#### 7. **Optimization**
+   - Optimize the following parameters:
+     - VWAP period (if adjustable).
+     - Volume threshold for entry confirmation.
+     - Stop loss and take profit multiples (e.g., 1x, 1.5x, 2x ATR).
+     - Time-based exit rules.
+
+#### 8. **Validation**
+   - Perform out-of-sample testing on a separate dataset to validate the strategy.
+   - Ensure the strategy performs consistently across different market conditions (e.g., trending, ranging, high/low volatility).
+
+---
+
+These instructions are ready for backtesting. Let me know if you need further refinements! 🌙

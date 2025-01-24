@@ -107,8 +107,8 @@ class CoinGeckoTokenFinder:
             'token_id': token.get('id', 'unknown'),
             'symbol': token.get('symbol', 'N/A'),
             'name': token.get('name', 'Unknown'),
-            'price': token.get('current_price'),
-            'volume_24h': token.get('total_volume', 0),
+            'price': float(token.get('current_price').iloc[0]) if isinstance(token.get('current_price'), pd.Series) else token.get('current_price'),
+            'volume_24h': int(token.get('total_volume').iloc[0]) if isinstance(token.get('total_volume'), pd.Series) else token.get('total_volume'),
             'discovered_at': datetime.now().isoformat()
         } for token in tokens])
         
@@ -118,14 +118,14 @@ class CoinGeckoTokenFinder:
         # Save to CSV
         df.to_csv(DISCOVERED_TOKENS_FILE, index=False)
         print(f"✨ Saved {len(tokens)} tokens to {DISCOVERED_TOKENS_FILE}")
-        
-    def load_discovered_tokens(self) -> pd.DataFrame:
-        """Load previously discovered tokens"""
-        if DISCOVERED_TOKENS_FILE.exists():
-            df = pd.read_csv(DISCOVERED_TOKENS_FILE)
-            print(f"\n📚 Loaded {len(df)} previously discovered tokens")
-            return df
-        return pd.DataFrame()
+            
+        def load_discovered_tokens(self) -> pd.DataFrame:
+            """Load previously discovered tokens"""
+            if DISCOVERED_TOKENS_FILE.exists():
+                df = pd.read_csv(DISCOVERED_TOKENS_FILE)
+                print(f"\n📚 Loaded {len(df)} previously discovered tokens")
+                return df
+            return pd.DataFrame()
 
 def main():
     """Main function to run token discovery"""

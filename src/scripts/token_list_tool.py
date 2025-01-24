@@ -31,7 +31,7 @@ class TokenAccountTracker:
         payload = {
             "jsonrpc": "2.0",
             "id": "moon-dev-rocks",
-            "method": "getAssestsByOwner",
+            "method": "getTokenAccountsByOwner",
             "params": [
                 wallet_address,
                 {

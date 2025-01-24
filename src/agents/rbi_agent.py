@@ -145,7 +145,7 @@ import itertools
 import sys
 
 # DeepSeek Configuration
-DEEPSEEK_BASE_URL = "http://localhost:11434/v1"
+# DEEPSEEK_BASE_URL = "http://localhost:11434/v1"
 
 # Update data directory paths
 PROJECT_ROOT = Path(__file__).parent.parent  # Points to src/
@@ -162,16 +162,16 @@ print(f"📂 Final backtest directory: {FINAL_BACKTEST_DIR}")
 def init_deepseek_client():
     """Initialize DeepSeek client with proper error handling"""
     try:
-        deepseek_key = os.getenv("DEEPSEEK_KEY")
-        if not deepseek_key:
-            raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
+        #deepseek_key = os.getenv("DEEPSEEK_KEY")
+        # if not deepseek_key:
+        #    raise ValueError("🚨 DEEPSEEK_KEY not found in environment variables!")
             
         print("🔑 Initializing DeepSeek client...")
         print("🌟 Moon Dev's RBI Agent is connecting to DeepSeek...")
         
         client = openai.OpenAI(
-            api_key=deepseek_key,
-            base_url=DEEPSEEK_BASE_URL
+            base_url="http://localhost:11434/v1",
+            api_key="ollama"
         )
         
         print("✅ DeepSeek client initialized successfully!")

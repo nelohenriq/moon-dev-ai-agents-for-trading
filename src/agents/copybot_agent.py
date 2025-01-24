@@ -11,7 +11,7 @@ think about list
 
 import os
 import pandas as pd
-import anthropic
+import openai
 from termcolor import colored, cprint
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
@@ -66,7 +66,7 @@ class CopyBotAgent:
     def __init__(self):
         """Initialize the CopyBot agent with LLM"""
         load_dotenv()
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.client = openai.OpenAI(base_url="http:/localhost:11434/v1", api_key="ollama")
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's CopyBot Agent initialized!")
         

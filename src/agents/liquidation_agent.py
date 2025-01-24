@@ -1,3 +1,11 @@
+"""
+🌊 Moon Dev's Liquidation Monitor
+Built with love by Moon Dev 🚀
+
+Luna the Liquidation Agent tracks sudden increases in liquidation volume and announces when she sees potential market moves
+"""
+
+
 import os
 import pandas as pd
 import time

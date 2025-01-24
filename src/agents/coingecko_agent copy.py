@@ -100,20 +100,6 @@ Memory Files:
 
 Author: Moon Dev 🌙
 """
-import os
-import requests
-import yfinance as yf
-import pandas as pd
-import json
-from typing import Dict, List, Optional, Union
-from datetime import datetime, timedelta
-import time
-from dotenv import load_dotenv
-from termcolor import colored, cprint
-from openai import OpenAI  # Use OpenAI client for Ollama
-
-# Load environment variables
-load_dotenv()
 
 # 🤖 Agent Prompts & Personalities
 AGENT_ONE_PROMPT = """
@@ -173,9 +159,9 @@ Help Moon Dev keep track of the trading journey! 🎯
 """
 
 # 🤖 Agent Model Selection
-AGENT_ONE_MODEL = "llama3.2"  # Use Ollama for Agent One
-AGENT_TWO_MODEL = "llama3.2"  # Use Ollama for Agent Two
-TOKEN_EXTRACTOR_MODEL = "llama3.2"  # Use Ollama for token extraction
+AGENT_ONE_MODEL = "claude-3-haiku-20240307"     # Change this to any model you want for Agent One
+AGENT_TWO_MODEL = "claude-3-sonnet-20240229"    # Change this to any model you want for Agent Two
+TOKEN_EXTRACTOR_MODEL = "claude-3-haiku-20240307"  # Fast model for token extraction
 
 # 🎮 Game Configuration
 MINUTES_BETWEEN_ROUNDS = 30  # Time to wait between trading rounds (in minutes)
@@ -196,14 +182,60 @@ SYNOPSIS_TEMP = 0.3     # Low creativity for consistent summaries (0.2-0.4)
 # Token Log File
 TOKEN_LOG_FILE = Path("src/data/agent_discussed_tokens.csv")
 
-# Create data directory for agent memory in the correct project structure
-AGENT_MEMORY_DIR = Path("src/data/agent_memory")
-AGENT_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+# Available Models:
+# - claude-3-opus-20240229    (Most powerful, longest responses)
+# - claude-3-sonnet-20240229  (Balanced performance)
+# - claude-3-haiku-20240307   (Fastest, shorter responses)
+# - claude-2.1                (Previous generation)
+# - claude-2.0                (Previous generation)
+
+"""
+Response Length Guide (max_tokens):
+50-100:   Ultra concise, bullet points
+100-200:  Short paragraphs
+500-800:  Detailed explanation
+1000+:    In-depth analysis
+
+Temperature Guide:
+0.0:  Deterministic, same response every time
+0.3:  Very focused, minimal variation
+0.7:  Creative but stays on topic
+1.0:  Maximum creativity/variation
+"""
+
+"""
+SYSTEM GOAL:
+Two AI agents (Haiku & Sonnet) collaborate to grow a $10,000 portfolio to $10,000,000 using CoinGecko's 
+comprehensive crypto data (since 2014). They analyze market trends, identify opportunities, and make 
+strategic decisions together while maintaining a conversation log in the data folder.
+
+Agent One: Technical Analysis Expert 📊
+Agent Two: Fundamental/Macro Analysis Expert 🌍
+"""
+
+
+import os
+import requests
+import pandas as pd
+import json
+from typing import Dict, List, Optional, Union
+from datetime import datetime, timedelta
+import time
+from dotenv import load_dotenv
+from termcolor import colored, cprint
+import anthropic
+from pathlib import Path
+
+# Local imports
+from src.config import *
+
+# Load environment variables
+load_dotenv()
 
 def print_banner():
     """Print a fun colorful banner"""
     cprint("\n" + "="*70, "white", "on_blue")
-    cprint("🌙 🎮 Moon Dev's Trading Game! 🎮 🌙", "white", "on_magenta", attrs=["bold"])
+    cprint("🌙 🎮 Moon Dev's Crypto Trading Game! 🎮 🌙", "white", "on_magenta", attrs=["bold"])
     cprint("="*70 + "\n", "white", "on_blue")
 
 def print_section(title: str, color: str = "on_blue"):
@@ -212,13 +244,33 @@ def print_section(title: str, color: str = "on_blue"):
     cprint(f" {title} ", "white", color, attrs=["bold"])
     cprint(f"{'='*35}\n", "white", color)
 
+# Create data directory for agent memory in the correct project structure
+AGENT_MEMORY_DIR = Path("src/data/agent_memory")
+AGENT_MEMORY_DIR.mkdir(parents=True, exist_ok=True)
+
+def cleanup_old_memory_files():
+    """Clean up old memory files from previous naming conventions"""
+    old_files = ['haiku_memory.json', 'sonnet_memory.json']
+    for file in old_files:
+        try:
+            old_file = AGENT_MEMORY_DIR / file
+            if old_file.exists():
+                old_file.unlink()
+                cprint(f"🧹 Cleaned up old memory file: {file}", "white", "on_blue")
+        except Exception as e:
+            cprint(f"⚠️ Error cleaning up {file}: {e}", "white", "on_yellow")
+
+print(f"📁 Agent memory directory: {AGENT_MEMORY_DIR}")
+cleanup_old_memory_files()  # Clean up old files on startup
+
 class AIAgent:
     """Individual AI Agent for collaborative decision making"""
     
     def __init__(self, name: str, model: str = None):
         self.name = name
-        self.model = model or AGENT_ONE_MODEL
-        self.client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")  # Ollama client
+        self.model = model or AI_MODEL
+        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        # Use a simpler memory file name
         self.memory_file = AGENT_MEMORY_DIR / f"{name.lower().replace(' ', '_')}.json"
         self.load_memory()
         cprint(f"🤖 Agent {name} initialized with {model}!", "white", "on_green")
@@ -253,95 +305,217 @@ class AIAgent:
             
             # Add market data context
             market_context = f"""
-            Current Market Data:
-            {json.dumps(market_data, indent=2)}
+Current Market Data:
+{json.dumps(market_data, indent=2)}
 
-            Previous Agent Message:
-            {other_agent_message if other_agent_message else 'No previous message'}
+Previous Agent Message:
+{other_agent_message if other_agent_message else 'No previous message'}
 
-            Remember to format your response like this:
+Remember to format your response like this:
 
-            🤖 Hey Moon Dev! {self.name} here!
-            =================================
+🤖 Hey Moon Dev! {self.name} here!
+=================================
 
-            📊 Market Vibes:
-            [Your main market thoughts in simple terms]
+📊 Market Vibes:
+[Your main market thoughts in simple terms]
 
-            💡 Opportunities I See:
-            - [Opportunity 1]
-            - [Opportunity 2]
-            - [Opportunity 3]
+💡 Opportunities I See:
+- [Opportunity 1]
+- [Opportunity 2]
+- [Opportunity 3]
 
-            🎯 My Recommendations:
-            1. [Clear action item]
-            2. [Clear action item]
-            3. [Clear action item]
+🎯 My Recommendations:
+1. [Clear action item]
+2. [Clear action item]
+3. [Clear action item]
 
-            💰 Portfolio Impact:
-            [How this helps reach our $10M goal]
+💰 Portfolio Impact:
+[How this helps reach our $10M goal]
 
-            🌙 Moon Dev Wisdom:
-            [Fun reference to Moon Dev's trading style]
-            """
+🌙 Moon Dev Wisdom:
+[Fun reference to Moon Dev's trading style]
+"""
             
             # Get AI response with correct message format
-            response = self.client.chat.completions.create(
+            message = self.client.messages.create(
                 model=self.model,
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": market_context}
-                ],
                 max_tokens=max_tokens,
-                temperature=temperature
+                temperature=temperature,
+                system=prompt,  # Use the agent-specific prompt
+                messages=[{
+                    "role": "user",
+                    "content": market_context
+                }]
             )
             
             # Clean up the response
-            response_text = response.choices[0].message.content
+            response = str(message.content)
+            
+            # Remove TextBlock and formatting artifacts
+            response = (response
+                .replace("TextBlock(text='", "")
+                .replace("')", "")
+                .replace("\\n", "\n")
+                .replace("*", "")
+                .replace("```", "")
+                .strip())
             
             # Add extra newlines between sections for readability
             sections = ["Market Vibes:", "Opportunities I See:", "My Recommendations:", "Portfolio Impact:", "Moon Dev Wisdom:"]
             for section in sections:
-                response_text = response_text.replace(section, f"\n{section}\n")
+                response = response.replace(section, f"\n{section}\n")
             
             # Save to memory
             self.memory['conversations'].append({
                 'timestamp': datetime.now().isoformat(),
                 'market_data': market_data,
                 'other_message': other_agent_message,
-                'response': response_text
+                'response': response
             })
             self.save_memory()
             
-            return response_text
+            # Print response with some style
+            return response
             
         except Exception as e:
             cprint(f"❌ Error in agent thinking: {str(e)}", "white", "on_red")
             return f"Error processing market data: {str(e)}"
 
-class YFinanceAPI:
-    """Utility class for yfinance API calls 🦎"""
+class CoinGeckoAPI:
+    """Utility class for CoinGecko API calls 🦎"""
     
     def __init__(self):
-        print("🦎 Moon Dev's yfinance API initialized!")
+        self.api_key = os.getenv("COINGECKO_API_KEY")
+        if not self.api_key:
+            print("⚠️ Warning: COINGECKO_API_KEY not found in environment variables!")
+        self.base_url = "https://pro-api.coingecko.com/api/v3"
+        self.headers = {
+            "x-cg-pro-api-key": self.api_key,
+            "Content-Type": "application/json"
+        }
+        print("🦎 Moon Dev's CoinGecko API initialized!")
         
-    def get_price(self, symbol: str) -> Dict:
-        """Get current price data for a coin"""
-        print(f"🔍 Getting price for: {symbol}")
-        ticker = yf.Ticker(symbol)
-        return ticker.info
+    def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
+        """Make API request with rate limiting and error handling"""
+        try:
+            url = f"{self.base_url}/{endpoint}"
+            response = requests.get(url, headers=self.headers, params=params)
+            
+            if response.status_code == 429:
+                print("⚠️ Rate limit hit! Waiting before retry...")
+                time.sleep(60)  # Wait 60 seconds before retry
+                return self._make_request(endpoint, params)
+                
+            response.raise_for_status()
+            return response.json()
+            
+        except requests.exceptions.RequestException as e:
+            print(f"❌ API request failed: {str(e)}")
+            return {}
 
-    def get_market_data(self, symbols: List[str]) -> Dict:
-        """Get current market data for multiple coins"""
-        market_data = {}
-        for symbol in symbols:
-            market_data[symbol] = self.get_price(symbol)
-        return market_data
+    def get_ping(self) -> bool:
+        """Check API server status"""
+        try:
+            response = self._make_request("ping")
+            return "gecko_says" in response
+        except:
+            return False
+
+    def get_price(self, ids: Union[str, List[str]], vs_currencies: Union[str, List[str]]) -> Dict:
+        """Get current price data for coins
+        
+        Args:
+            ids: Coin ID(s) (e.g. 'bitcoin' or ['bitcoin', 'ethereum'])
+            vs_currencies: Currency(ies) to get price in (e.g. 'usd' or ['usd', 'eur'])
+        """
+        if isinstance(ids, str):
+            ids = [ids]
+        if isinstance(vs_currencies, str):
+            vs_currencies = [vs_currencies]
+            
+        params = {
+            'ids': ','.join(ids),
+            'vs_currencies': ','.join(vs_currencies)
+        }
+        
+        print(f"🔍 Getting prices for: {', '.join(ids)}")
+        return self._make_request("simple/price", params)
+
+    def get_coin_market_data(self, id: str) -> Dict:
+        """Get current market data for a coin
+        
+        Args:
+            id: Coin ID (e.g. 'bitcoin')
+        """
+        print(f"📊 Getting market data for {id}...")
+        return self._make_request(f"coins/{id}")
+
+    def get_trending(self) -> List[Dict]:
+        """Get trending search coins (Top-7) in the last 24 hours"""
+        print("🔥 Getting trending coins...")
+        response = self._make_request("search/trending")
+        return response.get('coins', [])
+
+    def get_global_data(self) -> Dict:
+        """Get cryptocurrency global market data"""
+        print("🌍 Getting global market data...")
+        return self._make_request("global")
+
+    def get_exchanges(self) -> List[Dict]:
+        """Get all exchanges data"""
+        print("💱 Getting exchanges data...")
+        return self._make_request("exchanges")
+
+    def get_exchange_rates(self) -> Dict:
+        """Get BTC-to-Currency exchange rates"""
+        print("💱 Getting exchange rates...")
+        return self._make_request("exchange_rates")
+
+    def get_coin_history(self, id: str, date: str) -> Dict:
+        """Get historical data for a coin at a specific date
+        
+        Args:
+            id: Coin ID (e.g. 'bitcoin')
+            date: Date in DD-MM-YYYY format
+        """
+        print(f"📅 Getting historical data for {id} on {date}...")
+        return self._make_request(f"coins/{id}/history", {'date': date})
+
+    def get_coin_market_chart(self, id: str, vs_currency: str, days: int) -> Dict:
+        """Get historical market data
+        
+        Args:
+            id: Coin ID (e.g. 'bitcoin')
+            vs_currency: Currency (e.g. 'usd')
+            days: Number of days of data to retrieve
+        """
+        params = {
+            'vs_currency': vs_currency,
+            'days': days
+        }
+        print(f"📈 Getting {days} days of market data for {id}...")
+        return self._make_request(f"coins/{id}/market_chart", params)
+
+    def get_coin_ohlc(self, id: str, vs_currency: str, days: int) -> List:
+        """Get coin's OHLC data
+        
+        Args:
+            id: Coin ID (e.g. 'bitcoin')
+            vs_currency: Currency (e.g. 'usd')
+            days: Number of days of data to retrieve
+        """
+        params = {
+            'vs_currency': vs_currency,
+            'days': days
+        }
+        print(f"📊 Getting {days} days of OHLC data for {id}...")
+        return self._make_request(f"coins/{id}/ohlc", params)
 
 class TokenExtractorAgent:
     """Agent that extracts token/crypto symbols from conversations"""
     
     def __init__(self):
-        self.client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")  # Ollama client
+        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
         self.model = TOKEN_EXTRACTOR_MODEL
         self.token_history = self._load_token_history()
         cprint("🔍 Token Extractor Agent initialized!", "white", "on_cyan")
@@ -360,28 +534,27 @@ class TokenExtractorAgent:
         try:
             print_section("🔍 Extracting Mentioned Tokens", "on_cyan")
             
-            message = self.client.chat.completions.create(
+            message = self.client.messages.create(
                 model=self.model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": f"""
-    Agent One said:
-    {agent_one_msg}
-
-    Agent Two said:
-    {agent_two_msg}
-
-    Extract all token symbols and return as a simple list.
-    """
-                    }
-                ],
                 max_tokens=EXTRACTOR_MAX_TOKENS,
-                temperature=EXTRACTOR_TEMP
+                temperature=EXTRACTOR_TEMP,
+                system=TOKEN_EXTRACTOR_PROMPT,  # Use the token extractor prompt
+                messages=[{
+                    "role": "user",
+                    "content": f"""
+Agent One said:
+{agent_one_msg}
+
+Agent Two said:
+{agent_two_msg}
+
+Extract all token symbols and return as a simple list.
+"""
+                }]
             )
             
             # Clean up response and split into list
-            tokens = message.choices[0].message.content.strip().split('\n')
+            tokens = str(message.content).strip().split('\n')
             tokens = [t.strip().upper() for t in tokens if t.strip()]
             
             # Create records for each token
@@ -412,11 +585,11 @@ class TokenExtractorAgent:
             return []
 
 class MultiAgentSystem:
-    """System managing multiple AI agents analyzing market data"""
+    """System managing multiple AI agents analyzing CoinGecko data"""
     
     def __init__(self):
         print_banner()
-        self.api = YFinanceAPI()
+        self.api = CoinGeckoAPI()
         self.agent_one = AIAgent("Agent One", AGENT_ONE_MODEL)
         self.agent_two = AIAgent("Agent Two", AGENT_TWO_MODEL)
         self.token_extractor = TokenExtractorAgent()
@@ -427,8 +600,8 @@ class MultiAgentSystem:
     def generate_round_synopsis(self, agent_one_response: str, agent_two_response: str) -> str:
         """Generate a brief synopsis of the round's key points using Synopsis Agent"""
         try:
-            message = self.agent_one.client.chat.completions.create(
-                model="llama3.2",
+            message = self.agent_one.client.messages.create(
+                model="claude-3-haiku-20240307",
                 max_tokens=SYNOPSIS_MAX_TOKENS,
                 temperature=SYNOPSIS_TEMP,
                 system=SYNOPSIS_AGENT_PROMPT,  # Use the synopsis agent prompt
@@ -446,7 +619,7 @@ Create a brief synopsis of this trading round.
                 }]
             )
             
-            synopsis = message.choices[0].message.content.strip()
+            synopsis = str(message.content).strip()
             return synopsis
             
         except Exception as e:
@@ -458,7 +631,10 @@ Create a brief synopsis of this trading round.
         if not self.round_history:
             return "No previous rounds yet."
             
-        history = "\n".join([f"Round {i+1}: {synopsis}" for i, synopsis in enumerate(self.round_history[-10:])])  # Show last 10 rounds
+        history = "\n".join([
+            f"Round {i+1}: {synopsis}"
+            for i, synopsis in enumerate(self.round_history[-10:])  # Show last 10 rounds
+        ])
         return f"\n📜 Recent Trading History:\n{history}\n"
         
     def run_conversation_cycle(self):
@@ -469,8 +645,10 @@ Create a brief synopsis of this trading round.
             # Get fresh market data
             cprint("📊 Gathering Market Intelligence...", "white", "on_magenta")
             market_data = {
-                'bitcoin': self.api.get_price('BTC-USD'),
-                'ethereum': self.api.get_price('ETH-USD')
+                'overview': self.api.get_global_data(),
+                'trending': self.api.get_trending(),
+                'bitcoin': self.api.get_coin_market_data('bitcoin'),
+                'ethereum': self.api.get_coin_market_data('ethereum')
             }
             
             # Add round history to market context

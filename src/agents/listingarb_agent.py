@@ -1,3 +1,43 @@
+"""
+🌙 Moon Dev's Listing Arbitrage Agent 🔍
+
+This agent analyzes tokens from CoinGecko that are not yet listed on major exchanges 
+(Binance and Coinbase), looking for potential opportunities. The system works in the 
+following steps:
+
+1. Token Discovery:
+   - Reads discovered tokens from src/data/discovered_tokens.csv
+   - These tokens are pre-filtered to be Solana tokens not on major exchanges
+   - Initial filtering by market cap (<$10M) and volume (>$100k)
+
+2. Data Collection:
+   - Fetches 14 days of OHLCV (Open, High, Low, Close) data
+   - Uses 4-hour intervals for detailed price action analysis
+   - Calculates key statistics like volatility and price changes
+
+3. AI Analysis:
+   - Two AI agents analyze each token in parallel:
+     a) Agent One (Claude Haiku): Technical analysis, OHLCV patterns
+     b) Agent Two (Claude Sonnet): Fundamental analysis, project evaluation
+   - Each agent provides BUY/SELL/DO NOTHING recommendations
+
+4. Results & Storage:
+   - Full analysis saved to src/data/ai_analysis.csv
+   - Filtered buy recommendations saved to src/data/ai_analysis_buys.csv
+   - Agents maintain memory of analyzed tokens to avoid duplication
+
+5. Optimization:
+   - Runs every 24 hours to manage API costs
+   - Uses parallel processing (50 processes) for efficiency
+   - Skips tokens analyzed within the last 24 hours
+   - Ignores stablecoins and wrapped tokens
+
+The system is designed to help identify promising tokens before they reach major 
+exchanges, potentially finding opportunities for significant returns.
+
+Created by Moon Dev 🌙
+"""
+
 import os
 import pandas as pd
 import json

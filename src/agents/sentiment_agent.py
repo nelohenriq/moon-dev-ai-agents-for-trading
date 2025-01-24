@@ -12,7 +12,7 @@ Required:
 """
 
 # Configuration
-TOKENS_TO_TRACK = ["solana", "bitcoin", "ethereum"]  # Add tokens you want to track
+TOKENS_TO_TRACK = ["solana", "bitcoin", "ethereum", "xrp"]  # Add tokens you want to track
 TWEETS_PER_RUN = 30  # Number of tweets to collect per run
 DATA_FOLDER = "src/data/sentiment"  # Where to store sentiment data
 SENTIMENT_HISTORY_FILE = "src/data/sentiment_history.csv"  # Store sentiment scores over time

@@ -16,11 +16,11 @@ MONITORED_TOKENS = [
     # 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',    # 💵 USDC
     'HeLp6NuQkmYB4pYWo2zYs22mESHXPQYzXbB8n4V98jwC',    # 🤖 AI16Z
     # 'v62Jv9pwMTREWV9f6TetZfMafV254vo99p7HSF25BPr',     # 🎮 GG Solana
-    # 'KENJSUYLASHUMfHyy5o4Hp2FdNqZg1AsUPhfH2kYvEP',   # GRIFFAIN
+    'KENJSUYLASHUMfHyy5o4Hp2FdNqZg1AsUPhfH2kYvEP',   # GRIFFAIN
     # '8x5VqbHA8D7NkD52uNuS5nnt3PwA3pLD34ymskeSo2Wn',    # 🧠 ZEREBRO
     # 'Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump',    # 😎 CHILL GUY
     # 'ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY',    # 🌙 MOODENG
-    # 'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',    # 🐕 WIF
+    'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',    # 🐕 WIF
 ]
 
 # Moon Dev's Token Trading List 🚀
@@ -29,7 +29,7 @@ tokens_to_trade = MONITORED_TOKENS  # Using the same list for trading
 
 # Token and wallet settings
 symbol = '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump'
-address = '4wgfCBf2WwLSRKLef9iW7JXZ2AfkxUxGM4XcKpHm3Sin' # YOUR WALLET ADDRESS HERE
+address = '6JJdhkhk2fsxJcv5f2pEfrkMfHDe6bJSWT6JF2pUXGAK' # YOUR WALLET ADDRESS HERE
 
 # Position sizing 🎯
 usd_size = 25  # Size of position to hold
@@ -122,6 +122,8 @@ MONITORED_TOKENS = [
     # 'Df6yfrKC8kZE3KNkrHERKzAetSxbrWeniQfyJY4Jpump',    # 😎 CHILL GUY
     # 'ED5nyyWEzpPPiWimP8vYm7sD7TD3LAt3Q3gRTWHzPJBY',    # 🌙 MOODENG
     'EKpQGSJtjMFqKZ9KQanSqYXRcF8fBopzLHYxdM65zcjm',    # 🐕 WIF
+    '8XtRWb4uAAJFMP4QQhoYYCWR6XXb7ybcCdiqPwz9s5WS',    # 🐸 ALON
+    '6AJcP7wuLwmRYLBNbi825wgguaPsWzPBEHcHndpRpump',    # 🐸 VINE
 ]
 
 # Moon Dev's Token Trading List 🚀
@@ -130,7 +132,7 @@ tokens_to_trade = MONITORED_TOKENS  # Using the same list for trading
 
 # Token and wallet settings
 symbol = '9BB6NFEcjBCtnNLFko2FqVQBq8HHM13kCyYcdQbgpump'
-address = '4wgfCBf2WwLSRKLef9iW7JXZ2AfkxUxGM4XcKpHm3Sin' # YOUR WALLET ADDRESS HERE
+address = '6JJdhkhk2fsxJcv5f2pEfrkMfHDe6bJSWT6JF2pUXGAK' # YOUR WALLET ADDRESS HERE
 
 # Position sizing 🎯
 usd_size = 25  # Size of position to hold

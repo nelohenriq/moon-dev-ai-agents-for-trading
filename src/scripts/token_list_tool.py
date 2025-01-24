@@ -13,7 +13,7 @@ import time
 
 # List of wallets to track - Add your wallet addresses here! 🎯
 WALLETS_TO_TRACK = [
-    "4wgfCBf2WwLSRKLef9iW7JXZ2AfkxUxGM4XcKpHm3Sin",  # Example wallet
+    "6JJdhkhk2fsxJcv5f2pEfrkMfHDe6bJSWT6JF2pUXGAK",  # Example wallet
     # Add more wallets here...
 ]
 

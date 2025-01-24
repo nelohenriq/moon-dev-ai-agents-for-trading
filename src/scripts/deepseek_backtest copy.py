@@ -1,6 +1,8 @@
 import pandas as pd
 import yfinance as yf
 from backtesting import Backtest, Strategy
+from backtesting.lib import crossover
+from backtesting.test import SMA
 import numpy as np
 
 class VWAPVolumeStrategy(Strategy):
@@ -42,31 +44,27 @@ class VWAPVolumeStrategy(Strategy):
 
 # Download Apple (AAPL) data from Yahoo Finance
 ticker = "AAPL"
-try:
-    data = yf.download(ticker, start="2020-01-01", end="2023-01-01")
-    
-    # Print the structure of the DataFrame
-    print(data.head())  # Print the first few rows of the DataFrame
-    print(data.columns)  # Print the column names
-    
-    # Flatten the MultiIndex
-    data.columns = data.columns.droplevel(1)  # Drop the second level of the MultiIndex
-    
-    # Reset index if necessary
-    data.reset_index(inplace=True)
+data = yf.download(ticker, start="2020-01-01", end="2023-01-01")
 
-    # Drop rows with missing data
-    data = data.dropna()
+# Rename columns to match backtesting.py's expected format
+data = data.rename(columns={
+    'Open': 'Open',
+    'High': 'High',
+    'Low': 'Low',
+    'Close': 'Close',
+    'Adj Close': 'Adj Close',
+    'Volume': 'Volume'
+})
 
-    # Run the backtest
-    bt = Backtest(data, VWAPVolumeStrategy, cash=10000, commission=.002)
-    stats = bt.run()
+# Drop rows with missing data
+data = data.dropna()
 
-    # Print the results
-    print(stats)
+# Run the backtest
+bt = Backtest(data, VWAPVolumeStrategy, cash=10000, commission=.002)
+stats = bt.run()
 
-    # Plot the backtest results
-    bt.plot()
+# Print the results
+print(stats)
 
-except Exception as e:
-    print(f"❌ Error downloading data or running backtest: {str(e)}")
+# Plot the backtest results
+bt.plot()

@@ -1,10 +1,18 @@
+"""
+🌊 Moon Dev's Liquidation Monitor
+Built with love by Moon Dev 🚀
+
+Luna the Liquidation Agent tracks sudden increases in liquidation volume and announces when she sees potential market moves
+"""
+
 import os
 import pandas as pd
 import time
 from datetime import datetime, timedelta
 from termcolor import colored, cprint
 from dotenv import load_dotenv
-from openai import OpenAI  # Use OpenAI client for Ollama
+import openai
+import anthropic
 from pathlib import Path
 from src import nice_funcs as n
 from src import nice_funcs_hl as hl
@@ -13,7 +21,6 @@ from collections import deque
 from src.agents.base_agent import BaseAgent
 import traceback
 import numpy as np
-import pyttsx3  # Add pyttsx3 for TTS
 
 # Get the project root directory
 PROJECT_ROOT = Path(__file__).parent.parent.parent
@@ -41,9 +48,10 @@ AI_MODEL = False  # Set to model name to override config.AI_MODEL
 AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
 AI_MAX_TOKENS = 50  # Set > 0 to override config.AI_MAX_TOKENS
 
-# Voice settings (pyttsx3)
-VOICE_NAME = "nova"  # Not used in pyttsx3, but kept for compatibility
-VOICE_SPEED = 1  # Not used in pyttsx3, but kept for compatibility
+# Voice settings
+VOICE_MODEL = "tts-1"
+VOICE_NAME = "nova"  # Options: alloy, echo, fable, onyx, nova, shimmer
+VOICE_SPEED = 1
 
 # AI Analysis Prompt
 LIQUIDATION_ANALYSIS_PROMPT = """
@@ -90,11 +98,17 @@ class LiquidationAgent(BaseAgent):
                 
         load_dotenv()
         
-        # Initialize Ollama client
-        self.client = OpenAI(
-            base_url="http://localhost:11434/v1",  # Ollama's OpenAI-compatible endpoint
-            api_key="ollama"  # API key is not required for Ollama
-        )
+        # Get API keys
+        openai_key = os.getenv("OPENAI_KEY")
+        anthropic_key = os.getenv("ANTHROPIC_KEY")
+        
+        if not openai_key:
+            raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
+        if not anthropic_key:
+            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
+            
+        openai.api_key = openai_key
+        self.client = anthropic.Anthropic(api_key=anthropic_key)
         
         self.api = MoonDevAPI()
         
@@ -107,11 +121,6 @@ class LiquidationAgent(BaseAgent):
         # Initialize or load historical data
         self.history_file = self.data_dir / "liquidation_history.csv"
         self.load_history()
-        
-        # Initialize pyttsx3 TTS engine
-        self.tts_engine = pyttsx3.init()
-        self.tts_engine.setProperty('rate', 150)  # Speed of speech
-        self.tts_engine.setProperty('volume', 1.0)  # Volume level (0.0 to 1.0)
         
         print("🌊 Luna the Liquidation Agent initialized!")
         print(f"🎯 Alerting on liquidation increases above {(LIQUIDATION_THRESHOLD-1)*100:.0f}%")
@@ -294,27 +303,34 @@ class LiquidationAgent(BaseAgent):
             
             print(f"\n🤖 Analyzing liquidation spike with AI...")
             
-            # Get AI analysis using Ollama client
-            response = self.client.chat.completions.create(
+            # Get AI analysis using instance settings
+            message = self.client.messages.create(
                 model=self.ai_model,
-                messages=[
-                    {"role": "system", "content": context},
-                    {"role": "user", "content": context}
-                ],
+                max_tokens=self.ai_max_tokens,
                 temperature=self.ai_temperature,
-                max_tokens=self.ai_max_tokens
+                messages=[{
+                    "role": "user",
+                    "content": context
+                }]
             )
             
             # Handle response
-            if not response or not response.choices:
+            if not message or not message.content:
                 print("❌ No response from AI")
                 return None
                 
-            # Extract the response text
-            analysis = response.choices[0].message.content
-            
+            # Handle TextBlock response
+            response = message.content
+            if isinstance(response, list):
+                # If it's a list of TextBlocks, get the text from the first one
+                if len(response) > 0 and hasattr(response[0], 'text'):
+                    response = response[0].text
+                else:
+                    print("❌ Invalid response format from AI")
+                    return None
+                    
             # Parse response - handle both newline and period-based splits
-            lines = [line.strip() for line in analysis.split('\n') if line.strip()]
+            lines = [line.strip() for line in response.split('\n') if line.strip()]
             if not lines:
                 print("❌ Empty response from AI")
                 return None
@@ -379,16 +395,29 @@ class LiquidationAgent(BaseAgent):
             return None
             
     def _announce(self, message):
-        """Announce message using pyttsx3"""
+        """Announce message using OpenAI TTS"""
         if not message:
             return
             
         try:
             print(f"\n📢 Announcing: {message}")
             
-            # Use pyttsx3 to speak the message
-            self.tts_engine.say(message)
-            self.tts_engine.runAndWait()
+            # Generate speech
+            response = openai.audio.speech.create(
+                model=VOICE_MODEL,
+                voice=VOICE_NAME,
+                input=message,
+                speed=VOICE_SPEED
+            )
+            
+            # Save audio file
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            audio_file = self.audio_dir / f"liquidation_alert_{timestamp}.mp3"
+            
+            response.stream_to_file(audio_file)
+            
+            # Play audio using system command
+            os.system(f"afplay {audio_file}")
             
         except Exception as e:
             print(f"❌ Error in announcement: {str(e)}")

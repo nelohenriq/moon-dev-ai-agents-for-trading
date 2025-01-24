@@ -1,3 +1,10 @@
+"""
+🌙 Moon Dev's Funding Arbitrage Agent 💰
+
+This agent scans all tokens on Hyperliquid for funding rate opportunities.
+When it finds rates above our threshold, it analyzes the opportunity using AI.
+"""
+
 import os
 import time
 import traceback
@@ -6,9 +13,9 @@ from pathlib import Path
 import re
 
 import pandas as pd
-from openai import OpenAI  # Use OpenAI client for Ollama
+from anthropic import Anthropic
 from dotenv import load_dotenv
-import pyttsx3  # Add pyttsx3 for TTS
+import openai
 
 from src.agents.base_agent import BaseAgent
 from src.nice_funcs_hl import get_funding_rates
@@ -23,9 +30,10 @@ AI_MODEL = False  # Set to model name to override config.AI_MODEL
 AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
 AI_MAX_TOKENS = 25  # Set > 0 to override config.AI_MAX_TOKENS
 
-# Voice settings (pyttsx3)
-VOICE_NAME = "fable"  # Not used in pyttsx3, but kept for compatibility
-VOICE_SPEED = 1  # Not used in pyttsx3, but kept for compatibility
+# Voice settings
+VOICE_MODEL = "tts-1"
+VOICE_NAME = "fable"  # Options: alloy, echo, fable, onyx, nova, shimmer
+VOICE_SPEED = 1
 
 # Tokens to monitor for funding arbitrage
 # These should be liquid tokens with reliable funding rates
@@ -46,6 +54,7 @@ MONITOR_TOKENS = [
     'GOAT',
     'CHILLGUY',
     'MOODENG',
+
 ]
 
 # AI Analysis Prompt
@@ -68,7 +77,7 @@ class FundingArbAgent(BaseAgent):
         super().__init__('fundingarb')  # Initialize base agent with type
         
         # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else "llama2"  # Use Ollama model
+        self.ai_model = AI_MODEL if AI_MODEL else "claude-3-haiku-20240307"
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else 0.5
         self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else 150
         
@@ -85,16 +94,18 @@ class FundingArbAgent(BaseAgent):
         # Load environment variables
         load_dotenv()
         
-        # Initialize Ollama client
-        self.client = OpenAI(
-            base_url="http://localhost:11434/v1",  # Ollama's OpenAI-compatible endpoint
-            api_key="ollama"  # API key is not required for Ollama
-        )
+        # Get API keys
+        openai_key = os.getenv("OPENAI_KEY")
+        anthropic_key = os.getenv("ANTHROPIC_KEY")
         
-        # Initialize pyttsx3 TTS engine
-        self.tts_engine = pyttsx3.init()
-        self.tts_engine.setProperty('rate', 150)  # Speed of speech
-        self.tts_engine.setProperty('volume', 1.0)  # Volume level (0.0 to 1.0)
+        if not openai_key:
+            raise ValueError("🚨 OPENAI_KEY not found in environment variables!")
+        if not anthropic_key:
+            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
+            
+        # Initialize clients
+        openai.api_key = openai_key
+        self.client = Anthropic(api_key=anthropic_key)
         
         # Create data directories
         self.data_dir = Path("src/data/fundingarb")
@@ -122,24 +133,32 @@ class FundingArbAgent(BaseAgent):
             {market_data}
             """
             
-            # Get AI analysis using Ollama client
-            response = self.client.chat.completions.create(
+            # Get AI analysis
+            response = self.client.messages.create(
                 model=self.ai_model,
-                messages=[
-                    {"role": "system", "content": "You are a funding arbitrage analyst. You must respond in exactly 2 lines: ARBITRAGE/SKIP and your reason."},
-                    {"role": "user", "content": FUNDING_ANALYSIS_PROMPT.format(
+                max_tokens=self.ai_max_tokens,
+                temperature=self.ai_temperature,
+                system="You are a funding arbitrage analyst. You must respond in exactly 2 lines: ARBITRAGE/SKIP and your reason.",
+                messages=[{
+                    "role": "user",
+                    "content": FUNDING_ANALYSIS_PROMPT.format(
                         market_data=context,
                         threshold=YEARLY_FUNDING_THRESHOLD
-                    )}
-                ],
-                temperature=self.ai_temperature,
-                max_tokens=self.ai_max_tokens
+                    )
+                }]
             )
             
-            content = response.choices[0].message.content
+            content = str(response.content)
             print(f"\n🤖 Raw AI response:\n{content}")  # Debug print
             
+            # Handle TextBlock format
+            if 'TextBlock' in content:
+                match = re.search(r"text='([^']*)'", content)
+                if match:
+                    content = match.group(1)
+            
             # Clean up response and split into lines
+            content = content.replace('\\n', '\n')  # Handle escaped newlines
             lines = [line.strip() for line in content.split('\n') if line.strip()]
             print(f"📝 Parsed lines: {lines}")  # Debug print
             
@@ -188,16 +207,29 @@ class FundingArbAgent(BaseAgent):
         return announcement
     
     def _announce(self, message):
-        """Announce message using pyttsx3"""
+        """Announce message using OpenAI TTS"""
         if not message:
             return
             
         try:
             print(f"\n📢 Announcing: {message}")
             
-            # Use pyttsx3 to speak the message
-            self.tts_engine.say(message)
-            self.tts_engine.runAndWait()
+            # Generate speech
+            response = openai.audio.speech.create(
+                model=VOICE_MODEL,
+                voice=VOICE_NAME,
+                input=message,
+                speed=VOICE_SPEED
+            )
+            
+            # Save audio file
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            audio_file = self.audio_dir / f"fundingarb_alert_{timestamp}.mp3"
+            
+            response.stream_to_file(audio_file)
+            
+            # Play audio using system command
+            os.system(f"afplay {audio_file}")
             
         except Exception as e:
             print(f"❌ Error in announcement: {str(e)}")

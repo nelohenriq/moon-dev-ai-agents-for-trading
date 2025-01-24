@@ -3,19 +3,7 @@
 Handles all LLM-based trading decisions
 """
 
-import os
-import pandas as pd
-import json
-from termcolor import colored, cprint
-from dotenv import load_dotenv
-from datetime import datetime, timedelta
-import time
-import openai
-import ollama
-from src.config import *
-from src import nice_funcs as n
-from src.data.ohlcv_collector import collect_all_tokens
-
+# Keep only these prompts
 TRADING_PROMPT = """
 You are Moon Dev's AI Trading Assistant 🌙
 
@@ -70,30 +58,38 @@ Remember:
 - Cash must be stored as USDC using USDC_ADDRESS: {USDC_ADDRESS}
 """
 
+import anthropic
+import os
+import pandas as pd
+import json
+from termcolor import colored, cprint
+from dotenv import load_dotenv
+from datetime import datetime, timedelta
+import time
+
+# Local imports
+from src.config import *
+from src import nice_funcs as n
+from src.data.ohlcv_collector import collect_all_tokens
+
+# Load environment variables
 load_dotenv()
 
 class TradingAgent:
     def __init__(self):
-        self.use_local = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
-        
-        if self.use_local:
-            self.client = openai.OpenAI(base_url="http://localhost:11434/v1")
-            self.llm = ollama.Client()
-            self.model = "mistral"
-        else:
-            self.client = openai.OpenAI(base_url="https://api.groq.com/openai/v1", 
-                                      api_key=os.getenv("OPENAI_KEY"))
-            self.model = "mixtral-8x7b-32768"
-            
+        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's LLM Trading Agent initialized!")
 
     def analyze_market_data(self, token, market_data):
+        """Analyze market data using Claude"""
         try:
+            # Skip analysis for excluded tokens
             if token in EXCLUDED_TOKENS:
                 print(f"⚠️ Skipping analysis for excluded token: {token}")
                 return None
             
+            # Prepare strategy context
             strategy_context = ""
             if 'strategy_signals' in market_data:
                 strategy_context = f"""
@@ -103,33 +99,41 @@ Strategy Signals Available:
             else:
                 strategy_context = "No strategy signals available."
             
-            if self.use_local:
-                response = self.llm.generate(
-                    model=self.model,
-                    prompt=f"{TRADING_PROMPT.format(strategy_context=strategy_context)}\n\nMarket Data to Analyze:\n{market_data}"
-                )
-                response = response.response
-            else:
-                message = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{
+            message = self.client.messages.create(
+                model=AI_MODEL,
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
+                messages=[
+                    {
                         "role": "user", 
                         "content": f"{TRADING_PROMPT.format(strategy_context=strategy_context)}\n\nMarket Data to Analyze:\n{market_data}"
-                    }]
-                )
-                response = message.choices[0].message.content
+                    }
+                ]
+            )
+            
+            # Parse the response - handle both string and list responses
+            response = message.content
+            if isinstance(response, list):
+                # Extract text from TextBlock objects if present
+                response = '\n'.join([
+                    item.text if hasattr(item, 'text') else str(item)
+                    for item in response
+                ])
             
             lines = response.split('\n')
             action = lines[0].strip() if lines else "NOTHING"
             
+            # Extract confidence from the response (assuming it's mentioned as a percentage)
             confidence = 0
             for line in lines:
                 if 'confidence' in line.lower():
+                    # Extract number from string like "Confidence: 75%"
                     try:
                         confidence = int(''.join(filter(str.isdigit, line)))
                     except:
-                        confidence = 50
+                        confidence = 50  # Default if not found
             
+            # Add to recommendations DataFrame with proper reasoning
             reasoning = '\n'.join(lines[1:]) if len(lines) > 1 else "No detailed reasoning provided"
             self.recommendations_df = pd.concat([
                 self.recommendations_df,
@@ -146,6 +150,7 @@ Strategy Signals Available:
             
         except Exception as e:
             print(f"❌ Error in AI analysis: {str(e)}")
+            # Still add to DataFrame even on error, but mark as NOTHING with 0 confidence
             self.recommendations_df = pd.concat([
                 self.recommendations_df,
                 pd.DataFrame([{
@@ -156,14 +161,22 @@ Strategy Signals Available:
                 }])
             ], ignore_index=True)
             return None
-
+    
     def allocate_portfolio(self):
+        """Get AI-recommended portfolio allocation"""
         try:
             cprint("\n💰 Calculating optimal portfolio allocation...", "cyan")
             max_position_size = usd_size * (MAX_POSITION_PERCENTAGE / 100)
             cprint(f"🎯 Maximum position size: ${max_position_size:.2f} ({MAX_POSITION_PERCENTAGE}% of ${usd_size:.2f})", "cyan")
             
-            prompt = f"""You are Moon Dev's Portfolio Allocation AI 🌙
+            # Get allocation from AI
+            message = self.client.messages.create(
+                model=AI_MODEL,
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
+                messages=[{
+                    "role": "user", 
+                    "content": f"""You are Moon Dev's Portfolio Allocation AI 🌙
 
 Given:
 - Total portfolio size: ${usd_size}
@@ -181,32 +194,28 @@ Provide a portfolio allocation that:
 Example format:
 {{
     "token_address": amount_in_usd,
-    "{USDC_ADDRESS}": remaining_cash_amount
+    "{USDC_ADDRESS}": remaining_cash_amount  # Use exact USDC address
 }}"""
-
-            if self.use_local:
-                response = self.llm.generate(model=self.model, prompt=prompt)
-                response = response.response
-            else:
-                message = self.client.chat.completions.create(
-                    model=self.model,
-                    messages=[{"role": "user", "content": prompt}]
-                )
-                response = message.choices[0].message.content
+                }]
+            )
             
-            allocations = self.parse_allocation_response(response)
+            # Parse the response
+            allocations = self.parse_allocation_response(str(message.content))
             if not allocations:
                 return None
                 
+            # Fix USDC address if needed
             if "USDC_ADDRESS" in allocations:
                 amount = allocations.pop("USDC_ADDRESS")
                 allocations[USDC_ADDRESS] = amount
                 
+            # Validate allocation totals
             total_allocated = sum(allocations.values())
             if total_allocated > usd_size:
                 cprint(f"❌ Total allocation ${total_allocated:.2f} exceeds portfolio size ${usd_size:.2f}", "red")
                 return None
                 
+            # Print allocations
             cprint("\n📊 Portfolio Allocation:", "green")
             for token, amount in allocations.items():
                 token_display = "USDC" if token == USDC_ADDRESS else token
@@ -219,10 +228,12 @@ Example format:
             return None
 
     def execute_allocations(self, allocation_dict):
+        """Execute the allocations using AI entry for each position"""
         try:
             print("\n🚀 Moon Dev executing portfolio allocations...")
             
             for token, amount in allocation_dict.items():
+                # Skip USDC and other excluded tokens
                 if token in EXCLUDED_TOKENS:
                     print(f"💵 Keeping ${amount:.2f} in {token}")
                     continue
@@ -230,6 +241,7 @@ Example format:
                 print(f"\n🎯 Processing allocation for {token}...")
                 
                 try:
+                    # Get current position value
                     current_position = n.get_token_balance_usd(token)
                     target_allocation = amount
                     
@@ -246,22 +258,26 @@ Example format:
                 except Exception as e:
                     print(f"❌ Error executing entry for {token}: {str(e)}")
                 
-                time.sleep(2)
+                time.sleep(2)  # Small delay between entries
                 
         except Exception as e:
             print(f"❌ Error executing allocations: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
 
     def handle_exits(self):
+        """Check and exit positions based on SELL or NOTHING recommendations"""
         cprint("\n🔄 Checking for positions to exit...", "white", "on_blue")
         
         for _, row in self.recommendations_df.iterrows():
             token = row['token']
             
+            # Skip excluded tokens (USDC and SOL)
             if token in EXCLUDED_TOKENS:
                 continue
                 
             action = row['action']
+            
+            # Check if we have a position
             current_position = n.get_token_balance_usd(token)
             
             if current_position > 0 and action in ["SELL", "NOTHING"]:
@@ -277,36 +293,43 @@ Example format:
                 cprint(f"✨ Keeping position for {token} (${current_position:.2f}) - AI recommends {action}", "white", "on_blue")
 
     def parse_allocation_response(self, response):
+        """Parse the AI's allocation response and handle both string and TextBlock formats"""
         try:
+            # Handle TextBlock format from Claude 3
             if isinstance(response, list):
                 response = response[0].text if hasattr(response[0], 'text') else str(response[0])
             
             print("🔍 Raw response received:")
             print(response)
             
+            # Find the JSON block between curly braces
             start = response.find('{')
             end = response.rfind('}') + 1
             if start == -1 or end == 0:
                 raise ValueError("No JSON object found in response")
             
             json_str = response[start:end]
+            
+            # More aggressive JSON cleaning
             json_str = (json_str
-                .replace('\n', '')
-                .replace('    ', '')
-                .replace('\t', '')
-                .replace('\\n', '')
-                .replace(' ', '')
-                .strip())
+                .replace('\n', '')          # Remove newlines
+                .replace('    ', '')        # Remove indentation
+                .replace('\t', '')          # Remove tabs
+                .replace('\\n', '')         # Remove escaped newlines
+                .replace(' ', '')           # Remove all spaces
+                .strip())                   # Remove leading/trailing whitespace
             
             print("\n🧹 Cleaned JSON string:")
             print(json_str)
             
+            # Parse the cleaned JSON
             allocations = json.loads(json_str)
             
             print("\n📊 Parsed allocations:")
             for token, amount in allocations.items():
                 print(f"  • {token}: ${amount}")
             
+            # Validate amounts are numbers
             for token, amount in allocations.items():
                 if not isinstance(amount, (int, float)):
                     raise ValueError(f"Invalid amount type for {token}: {type(amount)}")
@@ -322,15 +345,20 @@ Example format:
             return None
 
     def parse_portfolio_allocation(self, allocation_text):
+        """Parse portfolio allocation from text response"""
         try:
+            # Clean up the response text
             cleaned_text = allocation_text.strip()
             if "```json" in cleaned_text:
+                # Extract JSON from code block if present
                 json_str = cleaned_text.split("```json")[1].split("```")[0]
             else:
+                # Find the JSON object between curly braces
                 start = cleaned_text.find('{')
                 end = cleaned_text.rfind('}') + 1
                 json_str = cleaned_text[start:end]
             
+            # Parse the JSON
             allocations = json.loads(json_str)
             
             print("📊 Parsed allocations:")
@@ -348,19 +376,24 @@ Example format:
             return None
 
     def run(self):
+        """Run the trading agent (implements BaseAgent interface)"""
         self.run_trading_cycle()
 
     def run_trading_cycle(self, strategy_signals=None):
+        """Run one complete trading cycle"""
         try:
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             cprint(f"\n⏰ AI Agent Run Starting at {current_time}", "white", "on_green")
             
+            # Collect OHLCV data for all tokens
             cprint("📊 Collecting market data...", "white", "on_blue")
             market_data = collect_all_tokens()
             
+            # Analyze each token's data
             for token, data in market_data.items():
                 cprint(f"\n🤖 AI Agent Analyzing Token: {token}", "white", "on_green")
                 
+                # Include strategy signals in analysis if available
                 if strategy_signals and token in strategy_signals:
                     cprint(f"📊 Including {len(strategy_signals[token])} strategy signals in analysis", "cyan")
                     data['strategy_signals'] = strategy_signals[token]
@@ -370,12 +403,15 @@ Example format:
                 print(analysis)
                 print("\n" + "="*50 + "\n")
             
+            # Show recommendations summary
             cprint("\n📊 Moon Dev's Trading Recommendations:", "white", "on_blue")
             summary_df = self.recommendations_df[['token', 'action', 'confidence']].copy()
             print(summary_df.to_string(index=False))
             
+            # Handle exits first
             self.handle_exits()
             
+            # Then proceed with new allocations
             cprint("\n💰 Calculating optimal portfolio allocation...", "white", "on_blue")
             allocation = self.allocate_portfolio()
             
@@ -389,6 +425,7 @@ Example format:
             else:
                 cprint("\n⚠️ No allocations to execute!", "white", "on_yellow")
             
+            # Clean up temp data
             cprint("\n🧹 Cleaning up temporary data...", "white", "on_blue")
             try:
                 for file in os.listdir('temp_data'):
@@ -402,28 +439,31 @@ Example format:
             cprint(f"\n❌ Error in trading cycle: {str(e)}", "white", "on_red")
             cprint("🔧 Moon Dev suggests checking the logs and trying again!", "white", "on_blue")
 
-    def main():
-        cprint("🌙 Moon Dev AI Trading System Starting Up! 🚀", "white", "on_blue")
-        
-        agent = TradingAgent()
-        INTERVAL = SLEEP_BETWEEN_RUNS_MINUTES * 60
-        
-        while True:
-            try:
-                agent.run_trading_cycle()
+def main():
+    """Main function to run the trading agent every 15 minutes"""
+    cprint("🌙 Moon Dev AI Trading System Starting Up! 🚀", "white", "on_blue")
+    
+    agent = TradingAgent()
+    INTERVAL = SLEEP_BETWEEN_RUNS_MINUTES * 60  # Convert minutes to seconds
+    
+    while True:
+        try:
+            agent.run_trading_cycle()
+            
+            next_run = datetime.now() + timedelta(minutes=SLEEP_BETWEEN_RUNS_MINUTES)
+            cprint(f"\n⏳ AI Agent run complete. Next run at {next_run.strftime('%Y-%m-%d %H:%M:%S')}", "white", "on_green")
+            
+            # Sleep until next interval
+            time.sleep(INTERVAL)
                 
-                next_run = datetime.now() + timedelta(minutes=SLEEP_BETWEEN_RUNS_MINUTES)
-                cprint(f"\n⏳ AI Agent run complete. Next run at {next_run.strftime('%Y-%m-%d %H:%M:%S')}", "white", "on_green")
-                
-                time.sleep(INTERVAL)
-                    
-            except KeyboardInterrupt:
-                cprint("\n👋 Moon Dev AI Agent shutting down gracefully...", "white", "on_blue")
-                break
-            except Exception as e:
-                cprint(f"\n❌ Error: {str(e)}", "white", "on_red")
-                cprint("🔧 Moon Dev suggests checking the logs and trying again!", "white", "on_blue")
-                time.sleep(INTERVAL)
+        except KeyboardInterrupt:
+            cprint("\n👋 Moon Dev AI Agent shutting down gracefully...", "white", "on_blue")
+            break
+        except Exception as e:
+            cprint(f"\n❌ Error: {str(e)}", "white", "on_red")
+            cprint("🔧 Moon Dev suggests checking the logs and trying again!", "white", "on_blue")
+            # Still sleep and continue on error
+            time.sleep(INTERVAL)
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main() 

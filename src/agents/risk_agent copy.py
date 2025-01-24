@@ -37,6 +37,7 @@ or
 RESPECT_LIMIT: <detailed reason for each position>
 """
 
+import anthropic
 import os
 import pandas as pd
 import json
@@ -49,7 +50,6 @@ from datetime import datetime, timedelta
 import time
 from src.config import *
 from src.agents.base_agent import BaseAgent
-import ollama  # Open-source LLM alternative
 
 # Load environment variables
 load_dotenv()
@@ -59,6 +59,11 @@ class RiskAgent(BaseAgent):
         """Initialize Moon Dev's Risk Agent 🛡️"""
         super().__init__('risk')  # Initialize base agent with type
         
+        api_key = os.getenv("ANTHROPIC_KEY")
+        if not api_key:
+            raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
+            
+        self.client = anthropic.Anthropic(api_key=api_key)
         self.override_active = False
         self.last_override_check = None
         
@@ -193,13 +198,15 @@ class RiskAgent(BaseAgent):
             )
             
             cprint("🤖 AI Agent analyzing market data...", "white", "on_green")
-            response = ollama.generate(
-                model="llama2",  # Use the Llama2 model
-                prompt=prompt
+            message = self.client.messages.create(
+                model=config.AI_MODEL,
+                max_tokens=config.AI_MAX_TOKENS,
+                temperature=config.AI_TEMPERATURE,
+                messages=[{"role": "user", "content": prompt}]
             )
             
             # Get the response content and ensure it's a string
-            response = str(response['response']) if response else ""
+            response = str(message.content) if message.content else ""
             self.last_override_check = datetime.now()
             
             # Check if we should override (keep positions open)
@@ -382,12 +389,19 @@ CLOSE_ALL or HOLD_POSITIONS
 Then explain your reasoning.
 """
             # Get AI decision
-            response = ollama.generate(
-                model="llama2",  # Use the Llama2 model
-                prompt=prompt
+            message = self.client.messages.create(
+                model=AI_MODEL,
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
+                messages=[{
+                    "role": "user",
+                    "content": prompt
+                }]
             )
             
-            response = str(response['response']) if response else ""
+            response = message.content
+            if isinstance(response, list):
+                response = '\n'.join([item.text if hasattr(item, 'text') else str(item) for item in response])
             
             print("\n🤖 AI Risk Assessment:")
             print("=" * 50)
@@ -487,3 +501,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

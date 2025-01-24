@@ -1,15 +1,15 @@
-"""
+'''
 🌙 Moon Dev's Sentiment Agent
 Built with love by Moon Dev 🚀
 
 This agent monitors Twitter sentiment for our token list using twikit.
-It will analyze sentiment using Ollama (local LLM) and track mentioned tokens.
+It will analyze sentiment using HuggingFace models and track mentioned tokens.
 
 Required:
 1. First run twitter_login.py to generate cookies located: src/scripts/twitter_login.py
     - this will save a cookies.json that you should not share. make sure its in .gitignore
 2. Make sure your .env has the Twitter credentials, example added to .env.example
-"""
+'''
 
 # Configuration
 TOKENS_TO_TRACK = ["solana", "bitcoin", "ethereum"]  # Add tokens you want to track
@@ -22,9 +22,10 @@ CHECK_INTERVAL_MINUTES = 15  # How often to run sentiment analysis
 # Sentiment settings
 SENTIMENT_ANNOUNCE_THRESHOLD = 0.4  # Announce vocally if abs(sentiment) > this value (-1 to 1 scale)
 
-# Voice settings (using pyttsx3)
-VOICE_NAME = "english"  # pyttsx3 voice name (platform-dependent)
-VOICE_SPEED = 150  # Words per minute (adjust as needed)
+# Voice settings (copied from whale agent)
+VOICE_MODEL = "tts-1"  # or tts-1-hd for higher quality
+VOICE_NAME = "nova"   # Options: alloy, echo, fable, onyx, nova, shimmer
+VOICE_SPEED = 1      # 0.25 to 4.0
 
 import httpx
 from dotenv import load_dotenv
@@ -38,9 +39,10 @@ from random import randint
 import pathlib
 import asyncio
 import pandas as pd
+import torch
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import numpy as np
-import ollama  # Open-source LLM alternative
-import pyttsx3  # Open-source TTS alternative
+import openai
 from pathlib import Path
 
 # Create data directory if it doesn't exist
@@ -48,6 +50,9 @@ pathlib.Path(DATA_FOLDER).mkdir(parents=True, exist_ok=True)
 
 # Load environment variables
 load_dotenv()
+
+# Get OpenAI key for voice
+openai.api_key = os.getenv("OPENAI_KEY")
 
 # Patch httpx
 original_client = httpx.Client
@@ -93,9 +98,8 @@ class SentimentAgent:
     def __init__(self):
         """Initialize the Sentiment Agent"""
         self.client = None
-        self.tts_engine = pyttsx3.init()  # Initialize pyttsx3 TTS engine
-        self.tts_engine.setProperty('rate', VOICE_SPEED)
-        self.tts_engine.setProperty('voice', VOICE_NAME)
+        self.tokenizer = None
+        self.model = None
         self.audio_dir = Path("src/audio")
         self.audio_dir.mkdir(parents=True, exist_ok=True)
         
@@ -103,40 +107,48 @@ class SentimentAgent:
         if not os.path.exists(SENTIMENT_HISTORY_FILE):
             pd.DataFrame(columns=['timestamp', 'sentiment_score', 'num_tweets']).to_csv(SENTIMENT_HISTORY_FILE, index=False)
         
+        # Load the sentiment model at initialization
+        cprint("🤖 Loading sentiment model...", "cyan")
+        self.init_sentiment_model()
+            
         cprint("🌙 Moon Dev's Sentiment Agent initialized!", "green")
         
+    def init_sentiment_model(self):
+        """Initialize the BERT model for sentiment analysis"""
+        if self.model is None:
+            self.tokenizer = AutoTokenizer.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
+            self.model = AutoModelForSequenceClassification.from_pretrained("finiteautomata/bertweet-base-sentiment-analysis")
+            cprint("✨ Sentiment model loaded!", "green")
+
     def analyze_sentiment(self, texts):
-        """Analyze sentiment of a batch of texts using Ollama"""
-        try:
-            cprint("🤖 Analyzing sentiment with Ollama...", "cyan")
-            sentiment_scores = []
+        """Analyze sentiment of a batch of texts"""
+        self.init_sentiment_model()
+        
+        sentiments = []
+        batch_size = 8  # Process in small batches to avoid memory issues
+        
+        for i in range(0, len(texts), batch_size):
+            batch_texts = texts[i:i + batch_size]
+            inputs = self.tokenizer(batch_texts, padding=True, truncation=True, max_length=128, return_tensors="pt")
             
-            for text in texts:
-                # Use Ollama to analyze sentiment
-                response = ollama.generate(
-                    model="llama2",  # Use the Llama2 model
-                    prompt=f"Analyze the sentiment of this text and respond with a single number between -1 (very negative) and 1 (very positive):\n\n{text}"
-                )
-                
-                # Extract the sentiment score from the response
-                try:
-                    sentiment_score = float(response['response'].strip())
-                    sentiment_scores.append(sentiment_score)
-                except ValueError:
-                    cprint(f"⚠️ Could not parse sentiment score from response: {response['response']}", "yellow")
-                    continue
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+                predictions = torch.nn.functional.softmax(outputs.logits, dim=-1)
+                sentiments.extend(predictions.tolist())
+        
+        # Convert to sentiment scores (-1 to 1)
+        scores = []
+        for sentiment in sentiments:
+            # NEG, NEU, POS
+            neg, neu, pos = sentiment
+            # Convert to -1 to 1 scale
+            score = pos - neg  # Will be between -1 and 1
+            scores.append(score)
             
-            if not sentiment_scores:
-                return 0.0  # Neutral if no valid scores
-            
-            return np.mean(sentiment_scores)
-            
-        except Exception as e:
-            cprint(f"❌ Error analyzing sentiment: {str(e)}", "red")
-            return 0.0  # Neutral on error
+        return np.mean(scores)
 
     def _announce(self, message, is_important=False):
-        """Announce a message using pyttsx3"""
+        """Announce a message using text-to-speech"""
         try:
             print(f"\n🗣️ {message}")
             
@@ -144,10 +156,36 @@ class SentimentAgent:
             if not is_important:
                 return
                 
-            # Use pyttsx3 for TTS
-            self.tts_engine.say(message)
-            self.tts_engine.runAndWait()
+            # Generate unique filename based on timestamp
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            speech_file = self.audio_dir / f"sentiment_audio_{timestamp}.mp3"
             
+            # Generate speech using OpenAI
+            response = openai.audio.speech.create(
+                model=VOICE_MODEL,
+                voice=VOICE_NAME,
+                speed=VOICE_SPEED,
+                input=message
+            )
+            
+            # Save and play the audio
+            with open(speech_file, 'wb') as f:
+                for chunk in response.iter_bytes():
+                    f.write(chunk)
+            
+            # Play the audio
+            if os.name == 'posix':  # macOS/Linux
+                os.system(f"afplay {speech_file}")
+            else:  # Windows
+                os.system(f"start {speech_file}")
+                time.sleep(5)
+            
+            # Clean up
+            try:
+                speech_file.unlink()
+            except Exception as e:
+                print(f"⚠️ Couldn't delete audio file: {e}")
+                
         except Exception as e:
             print(f"❌ Error in text-to-speech: {str(e)}")
 

@@ -1,0 +1,54 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Objective**: Enhance momentum trading strategies using deep learning to predict stock price movements.
+   - **Core Concept**: Use historical price data and momentum indicators to identify trends and predict future price movements.
+   - **Data Inputs**: Historical stock prices, volume, and momentum indicators (e.g., RSI, MACD).
+   - **Model**: Deep learning model (e.g., LSTM or CNN) trained on historical data to predict price direction.
+
+#### 2. **Entry Rules**
+   - **Buy Signal**:
+     - When the deep learning model predicts a positive price movement (e.g., probability > 0.5).
+     - Momentum indicators (e.g., RSI > 50, MACD crossover above signal line) confirm the bullish trend.
+   - **Sell Signal**:
+     - When the deep learning model predicts a negative price movement (e.g., probability < 0.5).
+     - Momentum indicators (e.g., RSI < 50, MACD crossover below signal line) confirm the bearish trend.
+
+#### 3. **Exit Rules**
+   - **Take Profit**:
+     - Exit the trade when the price reaches a predefined profit target (e.g., 2% above entry price).
+   - **Stop Loss**:
+     - Exit the trade when the price drops to a predefined stop-loss level (e.g., 1% below entry price).
+   - **Time-Based Exit**:
+     - Exit the trade if the holding period exceeds a predefined duration (e.g., 5 days).
+
+#### 4. **Risk Management**
+   - **Position Sizing**:
+     - Allocate a fixed percentage of the portfolio to each trade (e.g., 2% of total capital).
+   - **Diversification**:
+     - Limit the number of open positions to avoid overexposure to a single stock or sector.
+   - **Risk-Reward Ratio**:
+     - Ensure a minimum risk-reward ratio of 2:1 for each trade.
+
+#### 5. **Required Indicators**
+   - **Momentum Indicators**:
+     - Relative Strength Index (RSI): To identify overbought/oversold conditions.
+     - Moving Average Convergence Divergence (MACD): To identify trend direction and momentum.
+   - **Price Data**:
+     - Historical stock prices (open, high, low, close) and volume.
+   - **Deep Learning Model**:
+     - Pre-trained model to predict price direction based on historical data.
+
+#### 6. **Backtesting Parameters**
+   - **Timeframe**: Daily or intraday data, depending on the strategy's frequency.
+   - **Lookback Period**: Use a rolling window of historical data (e.g., 60 days) for model predictions.
+   - **Transaction Costs**: Include brokerage fees and slippage in the backtest.
+   - **Benchmark**: Compare performance against a relevant benchmark (e.g., S&P 500).
+
+#### 7. **Performance Metrics**
+   - **Sharpe Ratio**: To measure risk-adjusted returns.
+   - **Maximum Drawdown**: To assess the strategy's risk.
+   - **Win Rate**: Percentage of profitable trades.
+   - **Average Profit/Loss**: Average return per trade.
+
+These instructions should be used to set up and execute the backtest for the momentum trading strategy enhanced by deep learning.

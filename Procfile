@@ -1,1 +1,0 @@
-web: cd src/frontend && python main.py 

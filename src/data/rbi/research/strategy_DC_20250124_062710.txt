@@ -1,0 +1,65 @@
+### Strategy Instructions for Backtesting: Momentum Trading Strategy
+
+#### 1. **Key Strategy Components**
+   - **Objective**: Capture short-term price momentum by identifying strong trending moves.
+   - **Timeframe**: Use a 5-minute or 15-minute chart for intraday trading.
+   - **Asset**: Suitable for highly liquid assets (e.g., major forex pairs, indices, or large-cap stocks).
+   - **Core Principle**: Buy during strong upward momentum and sell during strong downward momentum.
+
+---
+
+#### 2. **Required Indicators**
+   - **Moving Average (MA)**:
+     - Use a 50-period Exponential Moving Average (EMA) to identify the trend direction.
+   - **Relative Strength Index (RSI)**:
+     - Use a 14-period RSI to gauge overbought/oversold conditions.
+   - **Average True Range (ATR)**:
+     - Use a 14-period ATR to measure volatility and set stop-loss levels.
+
+---
+
+#### 3. **Entry Rules**
+   - **Long Entry**:
+     1. Price must be above the 50 EMA (indicating an uptrend).
+     2. RSI must be above 50 but below 70 (indicating bullish momentum without being overbought).
+     3. Wait for a bullish candlestick pattern (e.g., bullish engulfing or hammer) to confirm entry.
+   - **Short Entry**:
+     1. Price must be below the 50 EMA (indicating a downtrend).
+     2. RSI must be below 50 but above 30 (indicating bearish momentum without being oversold).
+     3. Wait for a bearish candlestick pattern (e.g., bearish engulfing or shooting star) to confirm entry.
+
+---
+
+#### 4. **Exit Rules**
+   - **Take Profit**:
+     - Set a take-profit level at 1.5x the ATR value from the entry price.
+   - **Stop Loss**:
+     - Set a stop-loss level at 1x the ATR value from the entry price.
+   - **Trailing Stop**:
+     - Use a trailing stop of 0.5x the ATR to lock in profits as the trade moves in your favor.
+   - **Time-Based Exit**:
+     - Exit the trade if the target or stop-loss is not hit within 2 hours of entry.
+
+---
+
+#### 5. **Risk Management**
+   - **Position Sizing**:
+     - Risk no more than 1-2% of your trading capital on any single trade.
+   - **Risk-Reward Ratio**:
+     - Aim for a minimum risk-reward ratio of 1:1.5.
+   - **Maximum Daily Trades**:
+     - Limit to 5 trades per day to avoid overtrading.
+
+---
+
+#### 6. **Additional Notes**
+   - **Avoid Trading During Low Volatility**:
+     - Do not trade if the ATR value is below a predefined threshold (e.g., 10 pips for forex).
+   - **Avoid News Events**:
+     - Avoid trading 15 minutes before and after major economic news releases.
+   - **Backtesting Period**:
+     - Test the strategy on at least 6 months of historical data to ensure robustness.
+
+---
+
+These instructions are ready for backtesting. Adjust parameters (e.g., ATR multiplier, RSI levels) as needed based on the asset and timeframe.

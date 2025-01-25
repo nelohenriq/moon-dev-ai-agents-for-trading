@@ -210,7 +210,7 @@ Rate Limits:
 4. Always do your own research (DYOR)
 5. The copybot follow list is Moon Dev's personal list and should not be used alone
 
-Need an API key? Visit: https://algotradecamp.com
+Need an API key? Visit: https://algotradecamp.com join the bootcamp and then quant elite once inside to get access to the api key.
 """
 
 import os

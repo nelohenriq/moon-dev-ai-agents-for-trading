@@ -1,3 +1,24 @@
+<<<<<<< HEAD
+=======
+"""
+💰 Moon Dev's Funding Rate Monitor
+Built with love by Moon Dev 🚀
+
+Fran the Funding Agent tracks funding rate changes across different timeframes and announces significant changes via OpenAI TTS.
+
+Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
+"""
+
+# Model override settings
+# Set to "0" to use config.py's AI_MODEL setting
+# Available models:
+# - "deepseek-chat" (DeepSeek's V3 model - fast & efficient)
+# - "deepseek-reasoner" (DeepSeek's R1 reasoning model)
+# - "0" (Use config.py's AI_MODEL setting)
+MODEL_OVERRIDE = "deepseek-chat"  # Set to "deepseek-chat" to use DeepSeek
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # Base URL for DeepSeek API
+
+>>>>>>> 24ce5da06e99ad946511f996b5443e1f3370a903
 import os
 import pandas as pd
 import time

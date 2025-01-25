@@ -74,7 +74,7 @@ class FundingAgent(BaseAgent):
         super().__init__('funding')
         
         # Set AI parameters - use config values unless overridden
-        self.ai_model = AI_MODEL if AI_MODEL else "llama3.2"  # Use Ollama model
+        self.ai_model = AI_MODEL if AI_MODEL else "deepseek-r1:1.5b"  # Use Ollama model
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
         self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
         

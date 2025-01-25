@@ -27,4 +27,3 @@
 
 
 ## moon dev api is in early alpha testing to host data i've been collecting like liquidations, open interest, funding rates, new token launches on solana, solana "good" traders, & recent trades from those traders. apply for access as an alpha tester by posting in the #members_chat with what you're looking to build with the api.
-

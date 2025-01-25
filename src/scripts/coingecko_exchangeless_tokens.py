@@ -1,5 +1,5 @@
 """
-🌙 Moon Dev's CoinGecko Token Finder 🔍
+🌙 Moon Dev's Token Finder 🔍
 Finds Solana tokens that aren't listed on major exchanges like Binance and Coinbase.
 Runs every 24 hours to maintain an updated list.
 """
@@ -18,7 +18,6 @@ load_dotenv()
 
 # ⚙️ Configuration Constants
 HOURS_BETWEEN_RUNS = 24
-MAJOR_EXCHANGES = ['binance', 'coinbase']  # Exchanges to exclude
 MIN_VOLUME_USD = 100_000  # Minimum 24h volume in USD
 
 # 🚫 Tokens to Skip (e.g. stablecoins, wrapped tokens)
@@ -33,33 +32,68 @@ DO_NOT_ANALYZE = [
 # 📁 File Paths
 DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
 
-class CoinGeckoTokenFinder:
+# 📄 Predefined list of Solana tokens (add more as needed)
+SOLANA_TOKENS = [
+    'SOL-USD',  # Solana
+    'SRM-USD',  # Serum
+    'FTT-USD',  # FTX Token
+    'RAY-USD',  # Raydium
+    'STEP-USD', # Step Finance
+    'MNGO-USD', # Mango Markets
+    'ORCA-USD', # Orca
+    'ATLAS-USD', # Star Atlas
+    'POLIS-USD', # Star Atlas DAO
+    'COPE-USD', # COPE
+    'OXY-USD',  # Oxygen
+    'MEDIA-USD', # Media Network
+    'LIKE-USD', # Only1
+    'SUNNY-USD', # Sunny Aggregator
+    'SLND-USD', # Solend
+    'PORT-USD', # Port Finance
+    'SLRS-USD', # Solrise Finance
+    'SNY-USD',  # Synthetify
+    'MER-USD',  # Mercurial Finance
+    'GRAPE-USD', # Grape Protocol
+    'KIN-USD',  # Kin
+    'SAMO-USD', # Samoyedcoin
+    'WOOF-USD', # WOOF
+    'SHDW-USD', # GenesysGo Shadow
+    'mSOL-USD', # Marinade Staked SOL
+    'scnSOL-USD', # Socean Staked SOL
+]
+
+class TokenFinder:
     """Utility class for finding promising Solana tokens 🦎"""
     
     def __init__(self):
-        print("🦎 Moon Dev's CoinGecko Token Finder initialized!")
+        print("🦎 Moon Dev's Token Finder initialized!")
         
-    def get_solana_tokens(self) -> pd.DataFrame:
-        """Get all Solana tokens with market data"""
+    def get_solana_tokens(self) -> List[Dict]:
+        """Get all Solana tokens with market data using yfinance"""
         print("\n🔍 Getting Solana tokens from Yahoo Finance...")
-        
-        # Example token tickers for Solana ecosystem
-        solana_tokens = ['SOL-USD', 'SRM-USD', 'FTT-USD']  # Add more tokens as needed
         all_tokens = []
 
-        for token in solana_tokens:
-            data = yf.download(token, period='1d', interval='1m')
-            if not data.empty:
-                token_info = {
-                    'id': token,
-                    'name': token,  # You may want to map this to actual names
-                    'symbol': token.split('-')[0],
-                    'current_price': data['Close'].iloc[-1],
-                    'total_volume': data['Volume'].sum()  # Total volume for the day
-                }
-                all_tokens.append(token_info)
+        for token in SOLANA_TOKENS:
+            try:
+                ticker = yf.Ticker(token)
+                data = ticker.history(period='1d', interval='1m')  # Fetch 1-day data
+                
+                if not data.empty:
+                    token_info = {
+                        'id': token,
+                        'name': token,  # You may want to map this to actual names
+                        'symbol': token.split('-')[0],
+                        'current_price': data['Close'].iloc[-1],
+                        'total_volume': data['Volume'].sum(),  # Total volume for the day
+                        'market_cap': None  # yfinance does not provide market cap for all tokens
+                    }
+                    all_tokens.append(token_info)
+                    print(f"📊 Retrieved data for {token}")
+            except Exception as e:
+                print(f"⚠️ Error fetching data for {token}: {str(e)}")
+                continue
         
-        print(f"📊 Retrieved {len(all_tokens)} tokens")
+        print(f"✨ Retrieved {len(all_tokens)} tokens")
         return all_tokens
         
     def filter_tokens(self, tokens: List[Dict]) -> List[Dict]:
@@ -72,21 +106,19 @@ class CoinGeckoTokenFinder:
             name = token.get('name', 'Unknown')
             symbol = token.get('symbol', 'N/A').upper()
             
-            # Check volume requirement
-            total_volume = token.get('total_volume', 0)
-            if isinstance(total_volume, (int, float)):
-                volume_usd = total_volume
-            else:
-                volume_usd = float(total_volume.iloc[0]) if hasattr(total_volume, 'iloc') else 0
+            # Skip if in DO_NOT_ANALYZE list
+            if token_id in DO_NOT_ANALYZE:
+                print(f"\n⏭️ Skipping {name} ({symbol}) - In DO_NOT_ANALYZE list")
+                continue
             
+            # Check volume requirement
+            volume_usd = token.get('total_volume', 0)
             if volume_usd < MIN_VOLUME_USD:
                 print(f"\n❌ Skipping {name} ({symbol}) - Volume too low: ${volume_usd:,.2f}")
                 continue
             
             # Token passed all checks
             price = token.get('current_price')
-            if isinstance(price, pd.Series):
-                price = price.iloc[0]
             price_str = f"${price:,.8f}" if price is not None else "N/A"
             
             print(f"\n✨ Found qualifying token: {name} ({symbol})")
@@ -107,8 +139,9 @@ class CoinGeckoTokenFinder:
             'token_id': token.get('id', 'unknown'),
             'symbol': token.get('symbol', 'N/A'),
             'name': token.get('name', 'Unknown'),
-            'price': float(token.get('current_price').iloc[0]) if isinstance(token.get('current_price'), pd.Series) else token.get('current_price'),
-            'volume_24h': int(token.get('total_volume').iloc[0]) if isinstance(token.get('total_volume'), pd.Series) else token.get('total_volume'),
+            'price': token.get('current_price'),
+            'volume_24h': token.get('total_volume', 0),
+            'market_cap': token.get('market_cap', 0),
             'discovered_at': datetime.now().isoformat()
         } for token in tokens])
         
@@ -118,21 +151,21 @@ class CoinGeckoTokenFinder:
         # Save to CSV
         df.to_csv(DISCOVERED_TOKENS_FILE, index=False)
         print(f"✨ Saved {len(tokens)} tokens to {DISCOVERED_TOKENS_FILE}")
-            
-        def load_discovered_tokens(self) -> pd.DataFrame:
-            """Load previously discovered tokens"""
-            if DISCOVERED_TOKENS_FILE.exists():
-                df = pd.read_csv(DISCOVERED_TOKENS_FILE)
-                print(f"\n📚 Loaded {len(df)} previously discovered tokens")
-                return df
-            return pd.DataFrame()
+        
+    def load_discovered_tokens(self) -> pd.DataFrame:
+        """Load previously discovered tokens"""
+        if DISCOVERED_TOKENS_FILE.exists():
+            df = pd.read_csv(DISCOVERED_TOKENS_FILE)
+            print(f"\n📚 Loaded {len(df)} previously discovered tokens")
+            return df
+        return pd.DataFrame()
 
 def main():
     """Main function to run token discovery"""
     print("\n🌙 Moon Dev's Token Finder Starting Up! 🚀")
     print(f"📝 Results will be saved to: {DISCOVERED_TOKENS_FILE.absolute()}")
     
-    finder = CoinGeckoTokenFinder()
+    finder = TokenFinder()
     
     try:
         while True:

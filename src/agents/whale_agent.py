@@ -38,7 +38,7 @@ WHALE_THRESHOLD_MULTIPLIER = 1.31  # Multiplier for average change to detect wha
 from src import config
 
 # Only set these if you want to override config.py settings
-AI_MODEL = "llama3.2"  # Use Ollama's local model
+AI_MODEL = "deepseek-r1:7b"  # Use Ollama's local model
 AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
 AI_MAX_TOKENS = 50  # Set > 0 to override config.AI_MAX_TOKENS
 

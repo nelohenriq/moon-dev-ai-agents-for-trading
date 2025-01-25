@@ -77,13 +77,13 @@ class TradingAgent:
         self.use_local = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
         
         if self.use_local:
-            self.client = openai.OpenAI(base_url="http://localhost:11434/v1")
+            self.client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
             self.llm = ollama.Client()
-            self.model = "mistral"
+            self.model = "deepseek-r1:7b"
         else:
             self.client = openai.OpenAI(base_url="https://api.groq.com/openai/v1", 
                                       api_key=os.getenv("OPENAI_KEY"))
-            self.model = "mixtral-8x7b-32768"
+            self.model = "llama-3.3-70b-versatile"
             
         self.recommendations_df = pd.DataFrame(columns=['token', 'action', 'confidence', 'reasoning'])
         print("🤖 Moon Dev's LLM Trading Agent initialized!")
@@ -402,28 +402,28 @@ Example format:
             cprint(f"\n❌ Error in trading cycle: {str(e)}", "white", "on_red")
             cprint("🔧 Moon Dev suggests checking the logs and trying again!", "white", "on_blue")
 
-    def main():
-        cprint("🌙 Moon Dev AI Trading System Starting Up! 🚀", "white", "on_blue")
-        
-        agent = TradingAgent()
-        INTERVAL = SLEEP_BETWEEN_RUNS_MINUTES * 60
-        
-        while True:
-            try:
-                agent.run_trading_cycle()
+def main():
+    cprint("🌙 Moon Dev AI Trading System Starting Up! 🚀", "white", "on_blue")
+    
+    agent = TradingAgent()
+    INTERVAL = SLEEP_BETWEEN_RUNS_MINUTES * 60
+    
+    while True:
+        try:
+            agent.run_trading_cycle()
+            
+            next_run = datetime.now() + timedelta(minutes=SLEEP_BETWEEN_RUNS_MINUTES)
+            cprint(f"\n⏳ AI Agent run complete. Next run at {next_run.strftime('%Y-%m-%d %H:%M:%S')}", "white", "on_green")
+            
+            time.sleep(INTERVAL)
                 
-                next_run = datetime.now() + timedelta(minutes=SLEEP_BETWEEN_RUNS_MINUTES)
-                cprint(f"\n⏳ AI Agent run complete. Next run at {next_run.strftime('%Y-%m-%d %H:%M:%S')}", "white", "on_green")
-                
-                time.sleep(INTERVAL)
-                    
-            except KeyboardInterrupt:
-                cprint("\n👋 Moon Dev AI Agent shutting down gracefully...", "white", "on_blue")
-                break
-            except Exception as e:
-                cprint(f"\n❌ Error: {str(e)}", "white", "on_red")
-                cprint("🔧 Moon Dev suggests checking the logs and trying again!", "white", "on_blue")
-                time.sleep(INTERVAL)
+        except KeyboardInterrupt:
+            cprint("\n👋 Moon Dev AI Agent shutting down gracefully...", "white", "on_blue")
+            break
+        except Exception as e:
+            cprint(f"\n❌ Error: {str(e)}", "white", "on_red")
+            cprint("🔧 Moon Dev suggests checking the logs and trying again!", "white", "on_blue")
+            time.sleep(INTERVAL)
 
-    if __name__ == "__main__":
-        main()
+if __name__ == "__main__":
+    main()

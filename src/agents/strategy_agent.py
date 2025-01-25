@@ -6,7 +6,6 @@ Handles all strategy-based trading decisions
 from src.config import *
 import json
 from termcolor import cprint
-import anthropic
 import openai
 import os
 import importlib
@@ -14,7 +13,6 @@ import inspect
 import time
 from src import nice_funcs as n
 import pyttsx3
-import ollama
 from transformers import pipeline
 
 STRATEGY_EVAL_PROMPT = """
@@ -55,15 +53,16 @@ class StrategyAgent:
         self.use_local = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
         
         if self.use_local:
-            self.llm = ollama.Client()
+            self.client = openai.OpenAI(base_url="http://localhost:11434/v1", 
+                                      api_key="ollama")
             self.engine = pyttsx3.init()
             self.engine.setProperty('rate', 150)    
             self.engine.setProperty('volume', 0.9)  
             self.sentiment = pipeline("sentiment-analysis", 
                                    model="finiteautomata/bertweet-base-sentiment-analysis")
         else:
-            self.client = openai.OpenAI(base_url="https://api.groq.com/openai/v1", 
-                                      api_key=os.getenv("OPENAI_KEY"))
+            self.client = openai.OpenAI(base_url="http://localhost:11434/v1", 
+                                      api_key="ollama")
 
         if ENABLE_STRATEGIES:
             try:
@@ -87,19 +86,8 @@ class StrategyAgent:
             signals_str = json.dumps(signals, indent=2)
             
             if self.use_local:
-                response = self.llm.generate(
-                    model='mistral',
-                    prompt=STRATEGY_EVAL_PROMPT.format(
-                        strategy_signals=signals_str, 
-                        market_data=market_data
-                    )
-                )
-                response = response.response
-            else:
-                message = self.client.messages.create(
-                    model=AI_MODEL,
-                    max_tokens=AI_MAX_TOKENS,
-                    temperature=AI_TEMPERATURE,
+                response = self.client.chat.completions.create(
+                    model='deepseek-r1:7b',  # Replace with your local model name
                     messages=[{
                         "role": "user",
                         "content": STRATEGY_EVAL_PROMPT.format(
@@ -108,7 +96,21 @@ class StrategyAgent:
                         ),
                     }]
                 )
-                response = message.content
+                response = response.choices[0].message.content  # Extract the response content
+            else:
+                response = self.client.chat.completions.create(
+                    model=AI_MODEL,
+                    messages=[{
+                        "role": "user",
+                        "content": STRATEGY_EVAL_PROMPT.format(
+                            strategy_signals=signals_str, 
+                            market_data=market_data
+                        ),
+                    }],
+                    max_tokens=AI_MAX_TOKENS,
+                    temperature=AI_TEMPERATURE,
+                )
+                response = response.choices[0].message.content  # Extract the response content
 
             lines = response.split("\n")
             decisions = lines[0].strip().split(",")
@@ -284,3 +286,26 @@ class StrategyAgent:
         if self.use_local:
             self.engine.say(message)
             self.engine.runAndWait()
+
+
+if __name__ == "__main__":
+    # Initialize the StrategyAgent
+    agent = StrategyAgent()
+    
+    # Define a token to test (use one from your MONITORED_TOKENS list in config.py)
+    test_token = 'CR7ux8AY8a6pJD9ekLDPi19u2ujFNSvBFgUh36sBJU2W'  # Example token (FART)
+    
+    # Get signals for the test token
+    print(f"\n🔍 Testing StrategyAgent with token: {test_token}")
+    signals = agent.get_signals(test_token)
+    
+    # Print the results
+    if signals:
+        print("\n✅ Signals retrieved successfully:")
+        for signal in signals:
+            print(f"  • Strategy: {signal['strategy_name']}")
+            print(f"    Direction: {signal['direction']}")
+            print(f"    Signal Strength: {signal['signal']}")
+            print(f"    Metadata: {signal['metadata']}")
+    else:
+        print("\n❌ No signals retrieved for the test token.")

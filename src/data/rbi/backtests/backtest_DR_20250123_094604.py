@@ -1,6 +1,27 @@
-To address the backtesting requirements, here's a structured implementation using Backtrader. This code includes the core components of your strategy with necessary simplifications due to data constraints.
+"""To address the backtesting requirements, here's a structured implementation using Backtrader. This code includes the core components of your strategy with necessary simplifications due to data constraints.
+### Strategy Overview:
+- **Timeframe**: 15m for both HTF and LTF
+- **Risk Management**: 1% risk per trade with dynamic position sizing
+- **Confluence Detection**: Identifies Order Blocks and FVGs using price action patterns
+- **Parameter Optimization**: Ready for optimization of swing period, fib levels, and RR ratios
+- **Advanced Exit Logic**: Implements partial profit taking and trailing stops
 
-```python
+### Key Features:
+1. **Multi-Timeframe Handling**: Uses 15m data for both HTF and LTF (due to data constraints)
+2. **Risk Management**: Implements 1% risk per trade with dynamic position sizing
+3. **Confluence Detection**: Identifies Order Blocks and FVGs using price action patterns
+4. **Parameter Optimization**: Ready for optimization of swing period, fib levels, and RR ratios
+5. **Advanced Exit Logic**: Implements partial profit taking and trailing stops
+
+### Usage:
+1. Adjust the data path to your CSV file
+2. Modify date ranges as needed
+3. Set `params.optimize = True` for parameter optimization
+4. Analyze results using PyFolio integration
+
+This implementation provides a solid foundation for testing your strategy while maintaining flexibility for further refinement.
+"""
+
 import backtrader as bt
 import pandas as pd
 import numpy as np
@@ -192,19 +213,3 @@ if __name__ == '__main__':
     
     print(f'Final Portfolio Value: {cerebro.broker.getvalue():.2f}')
     print(f'Total Trades: {strat.trade_count}')
-```
-
-### Key Features:
-1. **Multi-Timeframe Handling**: Uses 15m data for both HTF and LTF (due to data constraints)
-2. **Risk Management**: Implements 1% risk per trade with dynamic position sizing
-3. **Confluence Detection**: Identifies Order Blocks and FVGs using price action patterns
-4. **Parameter Optimization**: Ready for optimization of swing period, fib levels, and RR ratios
-5. **Advanced Exit Logic**: Implements partial profit taking and trailing stops
-
-### Usage:
-1. Adjust the data path to your CSV file
-2. Modify date ranges as needed
-3. Set `params.optimize = True` for parameter optimization
-4. Analyze results using PyFolio integration
-
-This implementation provides a solid foundation for testing your strategy while maintaining flexibility for further refinement.

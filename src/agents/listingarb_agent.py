@@ -51,6 +51,30 @@ from dotenv import load_dotenv
 import requests
 import numpy as np
 import concurrent.futures
+from datetime import datetime, timedelta
+from collections import deque
+
+class RateLimiter:
+    def __init__(self, max_requests=30, time_window=60):
+        self.max_requests = max_requests
+        self.time_window = time_window  # in seconds
+        self.requests = deque()
+
+    def wait_if_needed(self):
+        now = datetime.now()
+        
+        # Remove requests older than time window
+        while self.requests and (now - self.requests[0]).total_seconds() > self.time_window:
+            self.requests.popleft()
+            
+        # If at rate limit, wait until oldest request expires
+        if len(self.requests) >= self.max_requests:
+            wait_time = self.time_window - (now - self.requests[0]).total_seconds()
+            if wait_time > 0:
+                print(f"🕐 Rate limit reached, waiting {wait_time:.2f} seconds...")
+                time.sleep(wait_time)
+                
+        self.requests.append(now)
 
 # Load environment variables
 load_dotenv()
@@ -311,24 +335,33 @@ class ListingArbSystem:
         
     def get_ohlcv_data(self, token_id: str) -> str:
         """Get OHLCV data for the past 14 days in 4-hour intervals"""
+        rate_limiter = RateLimiter(max_requests=30, time_window=60)
+        
         try:
-            # Skip ignored tokens
             if token_id.lower() in DO_NOT_ANALYZE:
                 print(f"⏭️ Skipping ignored token: {token_id}")
                 return "❌ Token in ignore list"
-            
+
             print(f"\n📈 Fetching OHLCV data for {token_id}...")
+            
+            # Wait if needed before making request
+            rate_limiter.wait_if_needed()
             
             url = f"{COINGECKO_BASE_URL}/coins/{token_id}/ohlc"
             params = {
-                'vs_currency': 'usd',  # Required parameter
-                'days': '14'           # Will give us 4h intervals based on docs
+                'vs_currency': 'usd',
+                'days': '14'
             }
             headers = {
                 'x-cg-pro-api-key': COINGECKO_API_KEY
             }
-            
+
             response = requests.get(url, headers=headers, params=params)
+            # Handle rate limiting
+            if response.status_code == 429:
+                print("🕐 Rate limit hit, waiting 60 seconds...")
+                time.sleep(60)
+                response = requests.get(url, headers=headers, params=params)
             
             # Print raw response for debugging
             print("\n🔍 Raw API Response:")

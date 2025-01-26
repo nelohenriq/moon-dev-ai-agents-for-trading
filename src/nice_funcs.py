@@ -21,6 +21,14 @@ import solders
 from dotenv import load_dotenv
 import shutil
 import atexit
+import requests
+import sys
+import json
+import base64
+from solders.keypair import Keypair
+from solders.transaction import VersionedTransaction
+from solana.rpc.api import Client
+from solana.rpc.types import TxOpts
 
 # Load environment variables
 load_dotenv()
@@ -223,15 +231,6 @@ def token_creation_info(address):
         print("Failed to retrieve token creation info:", response.status_code)
 
 def market_buy(token, amount, slippage):
-    import requests
-    import sys
-    import json
-    import base64
-    from solders.keypair import Keypair
-    from solders.transaction import VersionedTransaction
-    from solana.rpc.api import Client
-    from solana.rpc.types import TxOpts
-
     KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
     if not KEY:
         raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
@@ -266,15 +265,6 @@ def market_buy(token, amount, slippage):
 
 
 def market_sell(QUOTE_TOKEN, amount, slippage):
-    import requests
-    import sys
-    import json
-    import base64
-    from solders.keypair import Keypair
-    from solders.transaction import VersionedTransaction
-    from solana.rpc.api import Client
-    from solana.rpc.types import TxOpts
-
     KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
     if not KEY:
         raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")

@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 """
 🌙 Moon Dev's Funding Arbitrage Agent 💰
 
@@ -9,7 +7,6 @@ When it finds rates above our threshold, it analyzes the opportunity using AI.
 Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
 """
 
->>>>>>> 24ce5da06e99ad946511f996b5443e1f3370a903
 import os
 import time
 import traceback

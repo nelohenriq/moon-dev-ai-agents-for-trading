@@ -103,6 +103,10 @@ datetime, open, high, low, close, volume,
 2023-01-01 00:00:00, 16531.83, 16532.69, 16509.11, 16510.82, 231.05338022,
 2023-01-01 00:15:00, 16509.78, 16534.66, 16509.11, 16533.43, 308.12276951,
 
+IMPORTANT: Return ONLY valid Python code for backtesting.py implementation.
+Start with imports and end with strategy execution.
+No explanations or thinking notes - just working code.
+
 Always add plenty of Moon Dev themed debug prints with emojis to make debugging easier! 🌙 ✨ 🚀
 """
 

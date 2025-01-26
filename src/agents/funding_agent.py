@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 """
 💰 Moon Dev's Funding Rate Monitor
 Built with love by Moon Dev 🚀
@@ -18,7 +16,6 @@ Need an API key? for a limited time, bootcamp members get free api keys for clau
 MODEL_OVERRIDE = "deepseek-chat"  # Set to "deepseek-chat" to use DeepSeek
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"  # Base URL for DeepSeek API
 
->>>>>>> 24ce5da06e99ad946511f996b5443e1f3370a903
 import os
 import pandas as pd
 import time

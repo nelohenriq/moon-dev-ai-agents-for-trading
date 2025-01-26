@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 🌙 Moon Dev's CopyBot Agent
 Analyzes current copybot positions to identify opportunities for increased position sizes
@@ -19,7 +18,7 @@ from datetime import datetime, timedelta
 import time
 from src.config import *
 from src import nice_funcs as n
-from src.data.ohlcv_collector import collect_all_tokens, collect_token_data
+from src.data.ohlcv_collector import collect_token_data
 
 # Data path for current copybot portfolio
 COPYBOT_PORTFOLIO_PATH = '/Users/md/Dropbox/dev/github/solana-copy-trader/csvs/current_portfolio.csv'
@@ -103,8 +102,7 @@ class CopyBotAgent:
             print(f"💰 Current Amount: {position_data['Amount'].values[0]}")
             print(f"💵 USD Value: ${position_data['USD Value'].values[0]:.2f}")
                 
-            # Get OHLCV data - Use collect_token_data instead of collect_all_tokens
-            print("\n📊 Fetching OHLCV data...")
+            # Get OHLCV data - Use collect_token_data instead of            print("\n📊 Fetching OHLCV data...")
             try:
                 token_market_data = collect_token_data(token)
                 print("\n🔍 OHLCV Data Retrieved:")
@@ -318,7 +316,6 @@ class CopyBotAgent:
 
 if __name__ == "__main__":
     analyzer = CopyBotAgent()
-=======
 """
 🌙 Moon Dev's CopyBot Agent
 Analyzes current copybot positions to identify opportunities for increased position sizes
@@ -640,5 +637,4 @@ class CopyBotAgent:
 
 if __name__ == "__main__":
     analyzer = CopyBotAgent()
->>>>>>> 24ce5da06e99ad946511f996b5443e1f3370a903
     analyzer.run_analysis_cycle()

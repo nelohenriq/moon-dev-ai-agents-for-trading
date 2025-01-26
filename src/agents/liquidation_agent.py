@@ -172,7 +172,7 @@ class LiquidationAgent(BaseAgent):
                 
                 # Convert timestamp to datetime (UTC)
                 df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-                current_time = datetime.utcnow()
+                current_time = datetime.datetime.now(datetime.UTC)
                 
                 # Calculate time windows
                 fifteen_min = current_time - timedelta(minutes=15)

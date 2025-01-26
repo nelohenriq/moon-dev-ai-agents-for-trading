@@ -181,7 +181,7 @@ DATA_TIMEFRAME = '1H'  # 1m, 3m, 5m, 15m, 30m, 1H, 2H, 4H, 6H, 8H, 12H, 1D, 3D, 
 SAVE_OHLCV_DATA = False  # 🌙 Set to True to save data permanently, False will only use temp data during run
 
 # AI Model Settings 🤖
-AI_MODEL = "llama-3.3-70b-versatile"  # Model Options:
+AI_MODEL = "deepseek-r1:1.5b"  # Model Options:
                                      # - claude-3-haiku-20240307 (Fast, efficient Claude model)
                                      # - claude-3-sonnet-20240229 (Balanced Claude model)
                                      # - claude-3-opus-20240229 (Most powerful Claude model)

@@ -1,0 +1,52 @@
+### Strategy Instructions for Backtesting
+
+#### 1. **Key Strategy Components**
+   - **Trend Identification**: Use a combination of moving averages to identify the overall market trend.
+   - **Momentum Confirmation**: Utilize the Relative Strength Index (RSI) to confirm momentum before entering a trade.
+   - **Volatility Filter**: Apply the Average True Range (ATR) to filter out low-volatility conditions.
+   - **Entry Signals**: Look for specific candlestick patterns or price action signals that align with the trend and momentum.
+   - **Exit Signals**: Use trailing stops or predefined profit targets based on ATR multiples.
+
+#### 2. **Entry Rules**
+   - **Trend Confirmation**: 
+     - Use a 50-period Exponential Moving Average (EMA) and a 200-period Simple Moving Average (SMA).
+     - Enter a long position if the 50 EMA is above the 200 SMA, indicating an uptrend.
+     - Enter a short position if the 50 EMA is below the 200 SMA, indicating a downtrend.
+   - **Momentum Confirmation**:
+     - RSI should be above 50 for a long entry and below 50 for a short entry.
+   - **Volatility Filter**:
+     - Ensure that the ATR is above a predefined threshold (e.g., 1% of the asset's price) to avoid low-volatility conditions.
+   - **Candlestick Pattern**:
+     - For a long entry, look for a bullish engulfing pattern or a hammer candle.
+     - For a short entry, look for a bearish engulfing pattern or a shooting star candle.
+
+#### 3. **Exit Rules**
+   - **Profit Target**:
+     - Set a profit target at 2x the ATR value from the entry price.
+   - **Trailing Stop**:
+     - Use a trailing stop set at 1x the ATR value from the highest price reached since entry (for long positions) or the lowest price reached since entry (for short positions).
+   - **Time-Based Exit**:
+     - Exit the trade if the profit target or trailing stop is not hit within 5 trading days.
+
+#### 4. **Risk Management**
+   - **Position Sizing**:
+     - Risk no more than 1% of the total trading capital on any single trade.
+   - **Stop Loss**:
+     - Set a stop loss at 1x the ATR value from the entry price.
+   - **Risk-Reward Ratio**:
+     - Aim for a minimum risk-reward ratio of 1:2.
+
+#### 5. **Required Indicators**
+   - **50-period Exponential Moving Average (EMA)**
+   - **200-period Simple Moving Average (SMA)**
+   - **Relative Strength Index (RSI)**
+   - **Average True Range (ATR)**
+
+#### 6. **Backtesting Parameters**
+   - **Timeframe**: Daily charts.
+   - **Asset**: Any liquid asset (e.g., stocks, forex, commodities).
+   - **Data Range**: At least 5 years of historical data.
+   - **Commission**: Include a standard commission fee (e.g., $5 per trade).
+   - **Slippage**: Assume a slippage of 0.1% of the asset's price.
+
+These instructions should provide a clear framework for backtesting the strategy.

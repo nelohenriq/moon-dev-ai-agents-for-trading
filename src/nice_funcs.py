@@ -20,10 +20,21 @@ from termcolor import colored, cprint
 from dotenv import load_dotenv
 import shutil
 import atexit
+<<<<<<< HEAD
 from solders.pubkey import Pubkey
 from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solana.rpc.api import Client
+=======
+import requests
+import sys
+import json
+import base64
+from solders.keypair import Keypair
+from solders.transaction import VersionedTransaction
+from solana.rpc.api import Client
+from solana.rpc.types import TxOpts
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
 
 # Load environment variables
 load_dotenv()
@@ -84,6 +95,7 @@ def token_price(token_id):
         return None
 
 
+<<<<<<< HEAD
 # Fetch historical market data using CoinGecko API
 def get_data(contract_address, days_back, timeframe):
     """
@@ -97,6 +109,187 @@ def get_data(contract_address, days_back, timeframe):
     Returns:
         pd.DataFrame: A DataFrame containing historical price data.
     """
+=======
+def token_security_info(address):
+
+    '''
+
+    bigmatter
+​freeze authority is like renouncing ownership on eth
+
+    Token Security Info:
+{   'creationSlot': 242801308,
+    'creationTime': 1705679481,
+    'creationTx': 'ZJGoayaNDf2dLzknCjjaE9QjqxocA94pcegiF1oLsGZ841EMWBEc7TnDKLvCnE8cCVfkvoTNYCdMyhrWFFwPX6R',
+    'creatorAddress': 'AGWdoU4j4MGJTkSor7ZSkNiF8oPe15754hsuLmwcEyzC',
+    'creatorBalance': 0,
+    'creatorPercentage': 0,
+    'freezeAuthority': None,
+    'freezeable': None,
+    'isToken2022': False,
+    'isTrueToken': None,
+    'lockInfo': None,
+    'metaplexUpdateAuthority': 'AGWdoU4j4MGJTkSor7ZSkNiF8oPe15754hsuLmwcEyzC',
+    'metaplexUpdateAuthorityBalance': 0,
+    'metaplexUpdateAuthorityPercent': 0,
+    'mintSlot': 242801308,
+    'mintTime': 1705679481,
+    'mintTx': 'ZJGoayaNDf2dLzknCjjaE9QjqxocA94pcegiF1oLsGZ841EMWBEc7TnDKLvCnE8cCVfkvoTNYCdMyhrWFFwPX6R',
+    'mutableMetadata': True,
+    'nonTransferable': None,
+    'ownerAddress': None,
+    'ownerBalance': None,
+    'ownerPercentage': None,
+    'preMarketHolder': [],
+    'top10HolderBalance': 357579981.3372284,
+    'top10HolderPercent': 0.6439307358062863,
+    'top10UserBalance': 138709981.9366756,
+    'top10UserPercent': 0.24978920911102176,
+    'totalSupply': 555308143.3354646,
+    'transferFeeData': None,
+    'transferFeeEnable': None}
+    '''
+
+    # API endpoint for getting token security information
+    url = f"{BASE_URL}/token_security?address={address}"
+    headers = {"X-API-KEY": BIRDEYE_API_KEY}
+
+    # Sending a GET request to the API
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        # Parse the JSON response
+        security_data = response.json()['data']
+        print_pretty_json(security_data)
+    else:
+        print("Failed to retrieve token security info:", response.status_code)
+
+def token_creation_info(address):
+
+    '''
+    output sampel =
+
+    Token Creation Info:
+{   'decimals': 9,
+    'owner': 'AGWdoU4j4MGJTkSor7ZSkNiF8oPe15754hsuLmwcEyzC',
+    'slot': 242801308,
+    'tokenAddress': '9dQi5nMznCAcgDPUMDPkRqG8bshMFnzCmcyzD8afjGJm',
+    'txHash': 'ZJGoayaNDf2dLzknCjjaE9QjqxocA94pcegiF1oLsGZ841EMWBEc7TnDKLvCnE8cCVfkvoTNYCdMyhrWFFwPX6R'}
+    '''
+    # API endpoint for getting token creation information
+    url = f"{BASE_URL}/token_creation_info?address={address}"
+    headers = {"X-API-KEY": BIRDEYE_API_KEY}
+
+    # Sending a GET request to the API
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        # Parse the JSON response
+        creation_data = response.json()['data']
+        print_pretty_json(creation_data)
+    else:
+        print("Failed to retrieve token creation info:", response.status_code)
+
+def market_buy(token, amount, slippage):
+    KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+    if not KEY:
+        raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
+    #print('key success')
+    SLIPPAGE = slippage # 5000 is 50%, 500 is 5% and 50 is .5%
+
+    QUOTE_TOKEN = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v" # usdc
+
+    http_client = Client(os.getenv("RPC_ENDPOINT"))
+    #print('http client success')
+    if not http_client:
+        raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
+
+    quote = requests.get(f'https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}').json()
+    #print(quote)
+
+    txRes = requests.post('https://quote-api.jup.ag/v6/swap',
+                          headers={"Content-Type": "application/json"},
+                          data=json.dumps({
+                              "quoteResponse": quote,
+                              "userPublicKey": str(KEY.pubkey()),
+                              "prioritizationFeeLamports": PRIORITY_FEE  # or replace 'auto' with your specific lamport value
+                          })).json()
+    #print(txRes)
+    swapTx = base64.b64decode(txRes['swapTransaction'])
+    #print(swapTx)
+    tx1 = VersionedTransaction.from_bytes(swapTx)
+    tx = VersionedTransaction(tx1.message, [KEY])
+    txId = http_client.send_raw_transaction(bytes(tx), TxOpts(skip_preflight=True)).value
+    print(f"https://solscan.io/tx/{str(txId)}")
+
+
+
+def market_sell(QUOTE_TOKEN, amount, slippage):
+    KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
+    if not KEY:
+        raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
+    #print('key success')
+    SLIPPAGE = slippage  # 5000 is 50%, 500 is 5% and 50 is .5%
+
+    # token would be usdc for sell orders cause we are selling
+    token = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
+
+    http_client = Client(os.getenv("RPC_ENDPOINT"))
+    if not http_client:
+        raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
+    print('http client success')
+
+    quote = requests.get(f'https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}').json()
+    #print(quote)
+    txRes = requests.post('https://quote-api.jup.ag/v6/swap',
+                          headers={"Content-Type": "application/json"},
+                          data=json.dumps({
+                              "quoteResponse": quote,
+                              "userPublicKey": str(KEY.pubkey()),
+                              "prioritizationFeeLamports": PRIORITY_FEE
+                          })).json()
+    #print(txRes)
+    swapTx = base64.b64decode(txRes['swapTransaction'])
+    #print(swapTx)
+    tx1 = VersionedTransaction.from_bytes(swapTx)
+    #print(tx1)
+    tx = VersionedTransaction(tx1.message, [KEY])
+    #print(tx)
+    txId = http_client.send_raw_transaction(bytes(tx), TxOpts(skip_preflight=True)).value
+    print(f"https://solscan.io/tx/{str(txId)}")
+
+
+
+def get_time_range():
+
+    now = datetime.now()
+    ten_days_earlier = now - timedelta(days=10)
+    time_to = int(now.timestamp())
+    time_from = int(ten_days_earlier.timestamp())
+    #print(time_from, time_to)
+
+    return time_from, time_to
+
+import math
+def round_down(value, decimals):
+    factor = 10 ** decimals
+    return math.floor(value * factor) / factor
+
+
+def get_time_range(days_back):
+
+    now = datetime.now()
+    ten_days_earlier = now - timedelta(days=days_back)
+    time_to = int(now.timestamp())
+    time_from = int(ten_days_earlier.timestamp())
+    #print(time_from, time_to)
+
+    return time_from, time_to
+
+def get_data(address, days_back_4_data, timeframe):
+    time_from, time_to = get_time_range(days_back_4_data)
+
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
     # Check temp data first
     temp_file = f"moondev/temp_data/{contract_address}_latest.csv"
     if os.path.exists(temp_file):

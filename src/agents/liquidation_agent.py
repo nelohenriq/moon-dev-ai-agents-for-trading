@@ -3,6 +3,8 @@
 Built with love by Moon Dev 🚀
 
 Luna the Liquidation Agent tracks sudden increases in liquidation volume and announces when she sees potential market moves
+
+Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
 """
 
 import os
@@ -129,9 +131,13 @@ class LiquidationAgent(BaseAgent):
         self.tts_engine.setProperty("volume", 1.0)  # Volume level (0.0 to 1.0)
 
         print("🌊 Luna the Liquidation Agent initialized!")
+<<<<<<< HEAD
         print(
             f"🎯 Alerting on liquidation increases above {(LIQUIDATION_THRESHOLD-1)*100:.0f}%"
         )
+=======
+        print(f"🎯 Alerting on liquidation increases above +{LIQUIDATION_THRESHOLD*100:.0f}% from previous")
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
         print(f"📊 Analyzing last {LIQUIDATION_ROWS} liquidation events")
         print(f"📈 Using {LOOKBACK_BARS} {TIMEFRAME} candles for market context")
 
@@ -201,9 +207,15 @@ class LiquidationAgent(BaseAgent):
                 ]
 
                 # Convert timestamp to datetime (UTC)
+<<<<<<< HEAD
                 df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
                 current_time = datetime.utcnow()
 
+=======
+                df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
+                current_time = datetime.datetime.now(datetime.UTC)
+                
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
                 # Calculate time windows
                 fifteen_min = current_time - timedelta(minutes=15)
                 one_hour = current_time - timedelta(hours=1)
@@ -541,12 +553,23 @@ class LiquidationAgent(BaseAgent):
                     pct_change = analysis["pct_change_longs"]
                 else:
                     liq_type = "SHORT"
+<<<<<<< HEAD
                     pct_change = analysis["pct_change_shorts"]
 
+=======
+                    pct_change = analysis['pct_change_shorts']
+                
+                # Format the percentage change message
+                if pct_change > 0:
+                    change_msg = f"up {abs(pct_change):.1f}%"
+                else:
+                    change_msg = f"down {abs(pct_change):.1f}%"
+                
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
                 message = (
                     f"ayo moon dev seven seven seven! "
                     f"Massive {liq_type} liquidations detected! "
-                    f"Up {pct_change:.1f}% in the last period! "
+                    f"{change_msg} in the last period! "
                     f"AI suggests {analysis['action']} with {analysis['confidence']}% confidence 🌙"
                 )
                 return message
@@ -621,9 +644,16 @@ class LiquidationAgent(BaseAgent):
                     # Only trigger if we have valid previous data
                     if previous_longs > 0 and previous_shorts > 0:
                         # Check if we have a significant increase in either longs or shorts
+<<<<<<< HEAD
                         if current_longs > (
                             previous_longs * LIQUIDATION_THRESHOLD
                         ) or current_shorts > (previous_shorts * LIQUIDATION_THRESHOLD):
+=======
+                        # Adding 1 to threshold so 0.5 means 150% of previous value
+                        threshold = 1 + LIQUIDATION_THRESHOLD
+                        if (current_longs > (previous_longs * threshold) or 
+                            current_shorts > (previous_shorts * threshold)):
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
                             # Get AI analysis
                             analysis = self._analyze_opportunity(
                                 current_longs,

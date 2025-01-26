@@ -86,7 +86,7 @@ AI_ANALYSIS_FILE = Path("src/data/ai_analysis.csv")  # AI analysis results
 
 # 🤖 CoinGecko API Settings
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
-COINGECKO_BASE_URL = "https://pro-api.coingecko.com/api/v3"
+COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 TEMP_DATA_DIR = Path("src/data/temp_data")
 
 # 🤖 Agent Prompts

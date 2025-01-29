@@ -388,7 +388,7 @@ class CoinGeckoAPI:
         self.api_key = os.getenv("COINGECKO_API_KEY")
         if not self.api_key:
             print("⚠️ Warning: COINGECKO_API_KEY not found in environment variables!")
-        self.base_url = "https://pro-api.coingecko.com/api/v3"
+        self.base_url = "https://api.coingecko.com/api/v3"
         self.headers = {
             "x-cg-pro-api-key": self.api_key,
             "Content-Type": "application/json"

@@ -27,23 +27,19 @@ X/10
 import os
 import time as time_lib
 from datetime import datetime, timedelta, time
-from google.cloud import speech_v1p1beta1 as speech
-import pyaudio
+import speech_recognition as sr  # Use SpeechRecognition for offline speech-to-text
 import pyttsx3  # Import pyttsx3 for TTS
 from termcolor import cprint
 from pathlib import Path
 from dotenv import load_dotenv
 from random import uniform
 import pandas as pd
-import tempfile
 
 # Configuration
 MIN_INTERVAL_MINUTES = 4
 MAX_INTERVAL_MINUTES = 11
 RECORDING_DURATION = 30  # seconds
 FOCUS_THRESHOLD = 8  # Minimum acceptable focus score
-AUDIO_CHUNK_SIZE = 2048
-SAMPLE_RATE = 16000
 
 # Schedule settings
 SCHEDULE_START = time(5, 0)  # 5:00 AM
@@ -58,6 +54,9 @@ class FocusAgent:
     def __init__(self):
         """Initialize the Focus Agent"""
         load_dotenv()
+
+        # Initialize SpeechRecognition recognizer
+        self.recognizer = sr.Recognizer()
 
         # Initialize TTS engine
         self.tts_engine = pyttsx3.init()
@@ -95,52 +94,24 @@ class FocusAgent:
         return uniform(MIN_INTERVAL_MINUTES * 60, MAX_INTERVAL_MINUTES * 60)
 
     def record_audio(self):
-        """Record audio for specified duration"""
-        config = speech.RecognitionConfig(
-            encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
-            sample_rate_hertz=SAMPLE_RATE,
-            language_code="en-US",
-        )
-        streaming_config = speech.StreamingRecognitionConfig(config=config)
-
-        def audio_generator():
-            audio = pyaudio.PyAudio()
-            stream = audio.open(
-                format=pyaudio.paInt16,
-                channels=1,
-                rate=SAMPLE_RATE,
-                input=True,
-                frames_per_buffer=AUDIO_CHUNK_SIZE,
-            )
-
-            start_time = time_lib.time()
-            try:
-                while time_lib.time() - start_time < RECORDING_DURATION:
-                    data = stream.read(AUDIO_CHUNK_SIZE, exception_on_overflow=False)
-                    yield data
-            finally:
-                stream.stop_stream()
-                stream.close()
-                audio.terminate()
-
+        """Record audio for specified duration using SpeechRecognition"""
         try:
             self.is_recording = True
             self.current_transcript = []
 
-            requests = (
-                speech.StreamingRecognizeRequest(audio_content=chunk)
-                for chunk in audio_generator()
-            )
+            with sr.Microphone() as source:
+                cprint("\n🎤 Recording sample... (Speak now)", "cyan")
+                audio = self.recognizer.listen(source, timeout=RECORDING_DURATION)
 
-            responses = self.speech_client.streaming_recognize(
-                config=streaming_config, requests=requests
-            )
-
-            for response in responses:
-                if response.results:
-                    for result in response.results:
-                        if result.is_final:
-                            self.current_transcript.append(result.alternatives[0].transcript)
+                # Recognize speech using pocketsphinx (offline)
+                try:
+                    transcript = self.recognizer.recognize_sphinx(audio)
+                    self.current_transcript.append(transcript)
+                    cprint(f"🗣️ Transcript: {transcript}", "green")
+                except sr.UnknownValueError:
+                    cprint("⚠️ Speech recognition could not understand audio", "yellow")
+                except sr.RequestError as e:
+                    cprint(f"❌ Error with speech recognition: {str(e)}", "red")
 
         except Exception as e:
             cprint(f"❌ Error recording audio: {str(e)}", "red")
@@ -258,7 +229,6 @@ class FocusAgent:
                 time_lib.sleep(interval)
 
                 # Start recording
-                cprint("\n🎤 Recording sample...", "cyan")
                 self.record_audio()
 
                 # Process recording if we got something

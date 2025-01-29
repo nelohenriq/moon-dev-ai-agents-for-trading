@@ -14,7 +14,6 @@ class BaseAgent:
         """Initialize base agent with type"""
         self.type = agent_type
         self.start_time = datetime.now()
-        
+
     def run(self):
         """Default run method - should be overridden by child classes"""
-        raise NotImplementedError("Each agent must implement its own run method") 

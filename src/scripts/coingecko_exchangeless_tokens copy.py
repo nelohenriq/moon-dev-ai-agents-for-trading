@@ -15,6 +15,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from termcolor import colored, cprint
 
+
 # Load environment variables
 load_dotenv()
 
@@ -44,9 +45,9 @@ class CoinGeckoTokenFinder:
         if not self.api_key:
             raise ValueError("⚠️ COINGECKO_API_KEY not found in environment variables!")
             
-        self.base_url = "https://pro-api.coingecko.com/api/v3"
+        self.base_url = "https://api.coingecko.com/api/v3"
         self.headers = {
-            "x-cg-pro-api-key": self.api_key,
+            "x-cg-api-key": self.api_key,
             "Content-Type": "application/json"
         }
         self.api_calls = 0
@@ -89,7 +90,7 @@ class CoinGeckoTokenFinder:
                 'sparkline': False
             }
             
-            tokens = self._make_request("coins/markets", params)
+            tokens = self._make_request("coins/markets?", params)
             if not tokens:
                 break
                 
@@ -138,8 +139,8 @@ class CoinGeckoTokenFinder:
                     matching_token = existing_tokens_df[existing_tokens_df['token_id'] == token_id].iloc[0]
                     filtered_tokens.append({
                         'id': token_id,
-                        'name': name,
                         'symbol': symbol,
+                        'name': name,
                         'current_price': matching_token['price'],
                         'total_volume': matching_token['volume_24h'],
                         'market_cap': matching_token['market_cap']
@@ -199,6 +200,10 @@ class CoinGeckoTokenFinder:
             'market_cap': token.get('market_cap', 0),
             'discovered_at': datetime.now().isoformat()
         } for token in tokens])
+
+        # Get project root path relative to this script
+        PROJECT_ROOT = Path(__file__).parent.parent.parent
+        DISCOVERED_TOKENS_FILE = PROJECT_ROOT / "src" / "data" / "discovered_tokens.csv"
         
         # Ensure directory exists
         DISCOVERED_TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)

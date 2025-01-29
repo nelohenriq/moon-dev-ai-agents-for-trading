@@ -198,7 +198,7 @@ class WhaleAgent(BaseAgent):
         """Get current open interest data from API"""
         try:
             print("\n🔍 Fetching fresh OI data from API...")
-            df = self.api.get_oi_data()  # Changed from get_open_interest to get_oi_data
+            df = self.api.get_open_interest()  # Changed from get_open_interest to get_oi_data
             
             if df is None:
                 print("❌ Failed to get current OI data")

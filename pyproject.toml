@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "moondev"
 version = "0.1.0"
 authors = [
-    { name="Moon Dev", email="moondev@example.com" },
+    { name="Moon Dev", email="hhenriques761@gmail.com" },
 ]
 description = "Moon Dev's AI Agents for Trading"
 requires-python = ">=3.8"

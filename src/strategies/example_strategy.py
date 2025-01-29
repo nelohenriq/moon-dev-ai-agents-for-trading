@@ -23,11 +23,11 @@ class SimpleMAStrategy(BaseStrategy):
                 # Get market data using nice_funcs
                 data = n.get_data(token, days_back=3, timeframe='15m')  
                 if data is None or data.empty:
-                    continue
+                    cprint("No data fetched!!", "red")
                     
                 # Calculate moving averages
-                fast_ma = data['close'].rolling(self.fast_ma).mean()
-                slow_ma = data['close'].rolling(self.slow_ma).mean()
+                fast_ma = data['price'].rolling(self.fast_ma).mean()
+                slow_ma = data['price'].rolling(self.slow_ma).mean()
                 
                 # Get latest values
                 current_fast = fast_ma.iloc[-1]
@@ -44,7 +44,7 @@ class SimpleMAStrategy(BaseStrategy):
                         'strategy_type': 'ma_crossover',
                         'fast_ma': float(current_fast),
                         'slow_ma': float(current_slow),
-                        'current_price': float(data['close'].iloc[-1])
+                        'current_price': float(data['price'].iloc[-1])
                     }
                 }
                 

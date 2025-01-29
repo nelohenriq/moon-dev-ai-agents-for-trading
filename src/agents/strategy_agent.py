@@ -6,7 +6,6 @@ Handles all strategy-based trading decisions
 from src.config import *
 import json
 from termcolor import cprint
-import anthropic
 import openai
 import os
 import importlib
@@ -14,7 +13,6 @@ import inspect
 import time
 from src import nice_funcs as n
 import pyttsx3
-import ollama
 from transformers import pipeline
 
 STRATEGY_EVAL_PROMPT = """
@@ -49,26 +47,27 @@ Remember:
 - Better to reject a signal than risk a bad trade
 """
 
+
 class StrategyAgent:
     def __init__(self):
         self.enabled_strategies = []
-        self.use_local = os.getenv("USE_LOCAL_AI", "false").lower() == "true"
-        
-        if self.use_local:
-            self.llm = ollama.Client()
-            self.engine = pyttsx3.init()
-            self.engine.setProperty('rate', 150)    
-            self.engine.setProperty('volume', 0.9)  
-            self.sentiment = pipeline("sentiment-analysis", 
-                                   model="finiteautomata/bertweet-base-sentiment-analysis")
-        else:
-            self.client = openai.OpenAI(base_url="https://api.groq.com/openai/v1", 
-                                      api_key=os.getenv("OPENAI_KEY"))
+
+        self.client = openai.OpenAI(
+            base_url="http://localhost:11434/v1", api_key="ollama"
+        )
+        self.engine = pyttsx3.init()
+        self.engine.setProperty("rate", 150)
+        self.engine.setProperty("volume", 0.9)
+        self.sentiment = pipeline(
+            "sentiment-analysis",
+            model="finiteautomata/bertweet-base-sentiment-analysis",
+        )
 
         if ENABLE_STRATEGIES:
             try:
-                from src.strategies.custom.example_strategy import ExampleStrategy
-                self.enabled_strategies.extend([ExampleStrategy()])
+                from src.strategies.custom.real_example_strategy import RealExampleStrategy
+
+                self.enabled_strategies.extend([RealExampleStrategy()])
                 print(f"✅ Loaded {len(self.enabled_strategies)} strategies!")
                 for strategy in self.enabled_strategies:
                     print(f"  • {strategy.name}")
@@ -77,7 +76,9 @@ class StrategyAgent:
         else:
             print("🤖 Strategy Agent is disabled in config.py")
 
-        print(f"🤖 Moon Dev's Strategy Agent initialized with {len(self.enabled_strategies)} strategies!")
+        print(
+            f"🤖 Moon Dev's Strategy Agent initialized with {len(self.enabled_strategies)} strategies!"
+        )
 
     def evaluate_signals(self, signals, market_data):
         try:
@@ -85,30 +86,21 @@ class StrategyAgent:
                 return None
 
             signals_str = json.dumps(signals, indent=2)
-            
-            if self.use_local:
-                response = self.llm.generate(
-                    model='mistral',
-                    prompt=STRATEGY_EVAL_PROMPT.format(
-                        strategy_signals=signals_str, 
-                        market_data=market_data
-                    )
-                )
-                response = response.response
-            else:
-                message = self.client.messages.create(
-                    model=AI_MODEL,
-                    max_tokens=AI_MAX_TOKENS,
-                    temperature=AI_TEMPERATURE,
-                    messages=[{
+
+            message = self.client.chat.completions.create(
+                model="deepseek-r1:1.5b",
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
+                messages=[
+                    {
                         "role": "user",
                         "content": STRATEGY_EVAL_PROMPT.format(
-                            strategy_signals=signals_str, 
-                            market_data=market_data
+                            strategy_signals=signals_str, market_data=market_data
                         ),
-                    }]
-                )
-                response = message.content
+                    }
+                ],
+            )
+            response = message.choices[0].message.content
 
             lines = response.split("\n")
             decisions = lines[0].strip().split(",")
@@ -127,18 +119,22 @@ class StrategyAgent:
     def get_signals(self, token):
         try:
             signals = []
-            print(f"\n🔍 Analyzing {token} with {len(self.enabled_strategies)} strategies...")
+            print(
+                f"\n🔍 Analyzing {token} with {len(self.enabled_strategies)} strategies..."
+            )
 
             for strategy in self.enabled_strategies:
                 signal = strategy.generate_signals()
                 if signal and signal["token"] == token:
-                    signals.append({
-                        "token": signal["token"],
-                        "strategy_name": strategy.name,
-                        "signal": signal["signal"],
-                        "direction": signal["direction"],
-                        "metadata": signal.get("metadata", {}),
-                    })
+                    signals.append(
+                        {
+                            "token": signal["token"],
+                            "strategy_name": strategy.name,
+                            "signal": signal["signal"],
+                            "direction": signal["direction"],
+                            "metadata": signal.get("metadata", {}),
+                        }
+                    )
 
             if not signals:
                 print(f"ℹ️ No strategy signals for {token}")
@@ -146,10 +142,13 @@ class StrategyAgent:
 
             print(f"\n📊 Raw Strategy Signals for {token}:")
             for signal in signals:
-                print(f"  • {signal['strategy_name']}: {signal['direction']} ({signal['signal']}) for {signal['token']}")
+                print(
+                    f"  • {signal['strategy_name']}: {signal['direction']} ({signal['signal']}) for {signal['token']}"
+                )
 
             try:
                 from src.data.ohlcv_collector import collect_token_data
+
                 market_data = collect_token_data(token)
             except Exception as e:
                 print(f"⚠️ Could not get market data: {e}")
@@ -165,15 +164,21 @@ class StrategyAgent:
             approved_signals = []
             for signal, decision in zip(signals, evaluation["decisions"]):
                 if "EXECUTE" in decision.upper():
-                    print(f"✅ LLM approved {signal['strategy_name']}'s {signal['direction']} signal")
+                    print(
+                        f"✅ LLM approved {signal['strategy_name']}'s {signal['direction']} signal"
+                    )
                     approved_signals.append(signal)
                 else:
-                    print(f"❌ LLM rejected {signal['strategy_name']}'s {signal['direction']} signal")
+                    print(
+                        f"❌ LLM rejected {signal['strategy_name']}'s {signal['direction']} signal"
+                    )
 
             if approved_signals:
                 print(f"\n🎯 Final Approved Signals for {token}:")
                 for signal in approved_signals:
-                    print(f"  • {signal['strategy_name']}: {signal['direction']} ({signal['signal']})")
+                    print(
+                        f"  • {signal['strategy_name']}: {signal['direction']} ({signal['signal']})"
+                    )
 
                 print("\n💫 Executing approved strategy signals...")
                 self.execute_strategy_signals(approved_signals)
@@ -247,10 +252,11 @@ class StrategyAgent:
                     print(f"🎯 Target position: ${target_size:.2f} USD")
                     print(f"📈 Current position: ${current_position:.2f} USD")
 
-                    if self.use_local:
-                        sentiment_score = self.sentiment(token)[0]['score']
-                        target_size *= sentiment_score
-                        self._announce(f"Executing {direction} for {token} with strength {strength}")
+                    sentiment_score = self.sentiment(token)[0]["score"]
+                    target_size *= sentiment_score
+                    self._announce(
+                        f"Executing {direction} for {token} with strength {strength}"
+                    )
 
                     if direction == "BUY":
                         if current_position < target_size:
@@ -284,3 +290,6 @@ class StrategyAgent:
         if self.use_local:
             self.engine.say(message)
             self.engine.runAndWait()
+
+#agent = StrategyAgent()
+#signals = agent.get_signals("BTC")

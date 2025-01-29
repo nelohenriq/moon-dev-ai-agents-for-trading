@@ -11,7 +11,7 @@ Need an API key? for a limited time, bootcamp members get free api keys for clau
 import os
 import pandas as pd
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from termcolor import colored, cprint
 from dotenv import load_dotenv
 from openai import OpenAI  # Use OpenAI client for Ollama
@@ -47,7 +47,7 @@ COMPARISON_WINDOW = 15  # Default to 15 minutes for quick reactions
 from src import config
 
 # Only set these if you want to override config.py settings
-AI_MODEL = False  # Set to model name to override config.AI_MODEL
+AI_MODEL = "llama3.2"  # Set to model name to override config.AI_MODEL
 AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
 AI_MAX_TOKENS = 50  # Set > 0 to override config.AI_MAX_TOKENS
 
@@ -57,23 +57,19 @@ VOICE_SPEED = 1  # Not used in pyttsx3, but kept for compatibility
 
 # AI Analysis Prompt
 LIQUIDATION_ANALYSIS_PROMPT = """
-You must respond in exactly 3 lines:
-Line 1: Only write BUY, SELL, or NOTHING
-Line 2: One short reason why
-Line 3: Only write "Confidence: X%" where X is 0-100
+You are a precise trading assistant. Your response must follow this EXACT format:
 
-Analyze market with total {pct_change}% increase in liquidations:
+LINE 1: Type ONLY one of these words: BUY, SELL, or NOTHING
+LINE 2: Brief reason (10 words or less)
+LINE 3: Type "Confidence: " followed by a number 0-100 and "%"
 
-Current Long Liquidations: ${current_longs:,.2f} ({pct_change_longs:+.1f}% change)
-Current Short Liquidations: ${current_shorts:,.2f} ({pct_change_shorts:+.1f}% change)
-Time Period: Last {LIQUIDATION_ROWS} liquidation events
+Market Data:
+- Total Liquidation Change: {pct_change}%
+- Long Liquidations: ${current_longs:,.2f} ({pct_change_longs:+.1f}%)
+- Short Liquidations: ${current_shorts:,.2f} ({pct_change_shorts:+.1f}%)
 
-Market Data (Last {LOOKBACK_BARS} {TIMEFRAME} candles):
+Technical Context:
 {market_data}
-
-Large long liquidations often indicate potential bottoms (shorts taking profit)
-Large short liquidations often indicate potential tops (longs taking profit)
-Consider the ratio of long vs short liquidations and their relative changes
 """
 
 class LiquidationAgent(BaseAgent):
@@ -172,9 +168,7 @@ class LiquidationAgent(BaseAgent):
                 
                 # Convert timestamp to datetime (UTC)
                 df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-                current_time = datetime.datetime.now(datetime.UTC)
-                
-                # Calculate time windows
+                current_time = datetime.utcnow()
                 fifteen_min = current_time - timedelta(minutes=15)
                 one_hour = current_time - timedelta(hours=1)
                 four_hours = current_time - timedelta(hours=4)
@@ -270,11 +264,11 @@ class LiquidationAgent(BaseAgent):
             pct_change_longs = ((current_longs - previous_longs) / previous_longs) * 100 if previous_longs > 0 else 0
             pct_change_shorts = ((current_shorts - previous_shorts) / previous_shorts) * 100 if previous_shorts > 0 else 0
             total_pct_change = ((current_longs + current_shorts - previous_longs - previous_shorts) / 
-                              (previous_longs + previous_shorts)) * 100 if (previous_longs + previous_shorts) > 0 else 0
+                            (previous_longs + previous_shorts)) * 100 if (previous_longs + previous_shorts) > 0 else 0
             
-            # Get market data silently (BTC by default since it leads the market)
+            # Get market data silently (XRP as per the example)
             market_data = hl.get_data(
-                symbol="BTC",
+                symbol="LINK",
                 timeframe=TIMEFRAME,
                 bars=LOOKBACK_BARS,
                 add_indicators=True
@@ -303,65 +297,45 @@ class LiquidationAgent(BaseAgent):
             )
             
             print(f"\n🤖 Analyzing liquidation spike with AI...")
-            
-            # Get AI analysis using Ollama client
+
+
+            # Get AI analysis
             response = self.client.chat.completions.create(
                 model=self.ai_model,
-                messages=[
-                    {"role": "system", "content": context},
-                    {"role": "user", "content": context}
-                ],
+                messages=[{"role": "user", "content": context}],
                 temperature=self.ai_temperature,
                 max_tokens=self.ai_max_tokens
             )
             
-            # Handle response
-            if not response or not response.choices:
-                print("❌ No response from AI")
-                return None
-                
-            # Extract the response text
-            analysis = response.choices[0].message.content
+            ai_response = response.choices[0].message.content.strip()
             
-            # Parse response - handle both newline and period-based splits
-            lines = [line.strip() for line in analysis.split('\n') if line.strip()]
-            if not lines:
-                print("❌ Empty response from AI")
-                return None
+            # Parse AI response
+            lines = ai_response.split('\n')
+            if len(lines) >= 3:
+                action = lines[0].strip().upper()
+                reason = lines[1].strip()
+                confidence = lines[2].split(':')[1].strip().rstrip('%')
                 
-            # First line should be the action
-            action = lines[0].strip().upper()
-            if action not in ['BUY', 'SELL', 'NOTHING']:
-                print(f"⚠️ Invalid action: {action}")
-                return None
+                # Validate action
+                if action not in ['BUY', 'SELL', 'NOTHING']:
+                    action = 'NOTHING'
+                    reason = 'Invalid AI response'
+                    confidence = '0'
                 
-            # Rest is analysis
-            analysis = lines[1] if len(lines) > 1 else ""
-            
-            # Extract confidence from third line
-            confidence = 50  # Default confidence
-            if len(lines) > 2:
+                # Ensure confidence is a valid number
                 try:
-                    import re
-                    matches = re.findall(r'(\d+)%', lines[2])
-                    if matches:
-                        confidence = int(matches[0])
-                except:
-                    print("⚠️ Could not parse confidence, using default")
-            
-            return {
-                'action': action,
-                'analysis': analysis,
-                'confidence': confidence,
-                'pct_change': total_pct_change,
-                'pct_change_longs': pct_change_longs,
-                'pct_change_shorts': pct_change_shorts
-            }
+                    confidence = int(confidence)
+                except ValueError:
+                    confidence = 0
+                
+                return action, reason, confidence
+            else:
+                return 'NOTHING', 'Invalid AI response format', 0
             
         except Exception as e:
             print(f"❌ Error in AI analysis: {str(e)}")
             traceback.print_exc()
-            return None
+            return 'NOTHING', 'Error in analysis', 0
             
     def _format_announcement(self, analysis):
         """Format liquidation analysis into a speech-friendly message"""
@@ -474,7 +448,7 @@ class LiquidationAgent(BaseAgent):
                                     
                                     # Print detailed analysis
                                     print("\n" + "╔" + "═" * 50 + "╗")
-                                    print("║        🌙 Moon Dev's Liquidation Analysis 💦       ║")
+                                    print("║        🌙 Moon Dev's Liquidation Analysis 💦        ║")
                                     print("╠" + "═" * 50 + "╣")
                                     print(f"║  Action: {analysis['action']:<41} ║")
                                     print(f"║  Confidence: {analysis['confidence']}%{' '*36} ║")

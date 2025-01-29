@@ -126,6 +126,63 @@ class StrategyAgent:
             print(f"❌ Error evaluating signals: {e}")
             return None
 
+    def generate_signals(self) -> dict:
+        """Generate trading signals based on MA crossover"""
+        try:
+            for token in MONITORED_TOKENS:
+                # Get market data using nice_funcs
+                data = n.get_data(token, days_back=3, timeframe='15m')  
+                if data is None or data.empty:
+                    cprint("No data fetched!!", "red")
+                    
+                # Calculate moving averages
+                fast_ma = data['price'].rolling(self.fast_ma).mean()
+                slow_ma = data['price'].rolling(self.slow_ma).mean()
+                
+                # Get latest values
+                current_fast = fast_ma.iloc[-1]
+                current_slow = slow_ma.iloc[-1]
+                prev_fast = fast_ma.iloc[-2]
+                prev_slow = slow_ma.iloc[-2]
+                
+                # Check for crossover
+                signal = {
+                    'token': token,
+                    'signal': 0,
+                    'direction': 'NEUTRAL',
+                    'metadata': {
+                        'strategy_type': 'ma_crossover',
+                        'fast_ma': float(current_fast),
+                        'slow_ma': float(current_slow),
+                        'current_price': float(data['price'].iloc[-1])
+                    }
+                }
+                
+                # Bullish crossover (fast crosses above slow)
+                if prev_fast <= prev_slow and current_fast > current_slow:
+                    signal.update({
+                        'signal': 1.0,
+                        'direction': 'BUY'
+                    })
+                
+                # Bearish crossover (fast crosses below slow)
+                elif prev_fast >= prev_slow and current_fast < current_slow:
+                    signal.update({
+                        'signal': 1.0,
+                        'direction': 'SELL'
+                    })
+                
+                # Validate and format signal
+                if self.validate_signal(signal):
+                    signal['metadata'] = self.format_metadata(signal['metadata'])
+                    return signal
+                    
+            return None
+            
+        except Exception as e:
+            cprint(f"❌ Error generating signals: {str(e)}", "red")
+            return None 
+
     def get_signals(self, token):
         """Get and evaluate signals from all enabled strategies"""
         try:
@@ -300,3 +357,8 @@ class StrategyAgent:
         except Exception as e:
             print(f"❌ Error executing strategy signals: {str(e)}")
             print("🔧 Moon Dev suggests checking the logs and trying again!")
+
+
+if __name__ == "__main__":
+    agent = StrategyAgent()
+    agent.execute_strategy()

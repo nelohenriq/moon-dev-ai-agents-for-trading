@@ -1,58 +1,26 @@
 """
-🌙 Moon Dev's Listing Arbitrage Agent 🔍
-
-This agent analyzes tokens from CoinGecko that are not yet listed on major exchanges 
-(Binance and Coinbase), looking for potential opportunities. The system works in the 
-following steps:
-
-1. Token Discovery:
-   - Reads discovered tokens from src/data/discovered_tokens.csv
-   - These tokens are pre-filtered to be Solana tokens not on major exchanges
-   - Initial filtering by market cap (<$10M) and volume (>$100k)
-
-2. Data Collection:
-   - Fetches 14 days of OHLCV (Open, High, Low, Close) data
-   - Uses 4-hour intervals for detailed price action analysis
-   - Calculates key statistics like volatility and price changes
-
-3. AI Analysis:
-   - Two AI agents analyze each token in parallel:
-     a) Agent One (Claude Haiku): Technical analysis, OHLCV patterns
-     b) Agent Two (Claude Sonnet): Fundamental analysis, project evaluation
-   - Each agent provides BUY/SELL/DO NOTHING recommendations
-
-4. Results & Storage:
-   - Full analysis saved to src/data/ai_analysis.csv
-   - Filtered buy recommendations saved to src/data/ai_analysis_buys.csv
-   - Agents maintain memory of analyzed tokens to avoid duplication
-
-5. Optimization:
-   - Runs every 24 hours to manage API costs
-   - Uses parallel processing (50 processes) for efficiency
-   - Skips tokens analyzed within the last 24 hours
-   - Ignores stablecoins and wrapped tokens
-
-The system is designed to help identify promising tokens before they reach major 
-exchanges, potentially finding opportunities for significant returns.
-
-Created by Moon Dev 🌙
+🌙 Moon Dev's Listing Arb System 🔍
+Finds Solana tokens that aren't listed on major exchanges like Binance and Coinbase.
+Runs every 24 hours to maintain an updated list.
 """
 
 import os
 import pandas as pd
-import json
-from typing import Dict, List
-from datetime import datetime, timedelta
 import time
-from pathlib import Path
-from termcolor import colored, cprint
-from openai import OpenAI  # Using OpenAI library for Ollama
-from dotenv import load_dotenv
-import requests
+import openai
 import numpy as np
+import json
+from datetime import datetime, timedelta
+from pathlib import Path
+from dotenv import load_dotenv
+from typing import List
 import concurrent.futures
 from datetime import datetime, timedelta
 from collections import deque
+from termcolor import colored, cprint
+from typing import Dict
+import requests
+
 
 class RateLimiter:
     def __init__(self, max_requests=30, time_window=60):
@@ -85,7 +53,7 @@ PARALLEL_PROCESSES = 50        # Number of parallel processes to run
 MIN_VOLUME_USD = 100_000      # Minimum 24h volume to analyze
 MAX_MARKET_CAP = 10_000_000   # Maximum market cap to include in analysis (10M)
 
-# 🤖 Tokens to Ignore
+# 🚫 Tokens to Skip (e.g. stablecoins, wrapped tokens)
 DO_NOT_ANALYZE = [
     'tether',           # USDT - Stablecoin
     'usdt',            # Alternative USDT id
@@ -100,18 +68,18 @@ DO_NOT_ANALYZE = [
     'wrapped-solana',  # WSOL
 ]
 
-# 🤖 Agent Model Selection (Ollama models)
-AGENT_ONE_MODEL = "deepseek-r1:1.5b"  # Technical Analysis Agent
-AGENT_TWO_MODEL = "deepseek-r1:1.5b"  # Fundamental Analysis Agent
-
 # 📁 File Paths
-DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")  # Input from token discovery script
-AI_ANALYSIS_FILE = Path("src/data/ai_analysis.csv")  # AI analysis results
+DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
+AI_ANALYSIS_FILE = Path("src/data/ai_analysis.csv")
 
 # 🤖 CoinGecko API Settings
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 TEMP_DATA_DIR = Path("src/data/temp_data")
+
+# 🤖 Agent Model Selection
+AGENT_ONE_MODEL = "deepseek-r1:7b"     # Technical Analysis Agent
+AGENT_TWO_MODEL = "deepseek-r1:7b"    # Fundamental Analysis Agent
 
 # 🤖 Agent Prompts
 AGENT_ONE_PROMPT = """
@@ -164,7 +132,7 @@ class AIAgent:
     def __init__(self, name: str, model: str):
         self.name = name
         self.model = model  # e.g., "llama2", "mistral"
-        self.client = OpenAI(
+        self.client = openai.OpenAI(
             base_url="http://localhost:11434/v1",  # Ollama's OpenAI-compatible endpoint
             api_key="ollama"  # API key is not required for Ollama
         )
@@ -335,33 +303,24 @@ class ListingArbSystem:
         
     def get_ohlcv_data(self, token_id: str) -> str:
         """Get OHLCV data for the past 14 days in 4-hour intervals"""
-        rate_limiter = RateLimiter(max_requests=30, time_window=60)
-        
         try:
+            # Skip ignored tokens
             if token_id.lower() in DO_NOT_ANALYZE:
                 print(f"⏭️ Skipping ignored token: {token_id}")
                 return "❌ Token in ignore list"
-
-            print(f"\n📈 Fetching OHLCV data for {token_id}...")
             
-            # Wait if needed before making request
-            rate_limiter.wait_if_needed()
+            print(f"\n📈 Fetching OHLCV data for {token_id}...")
             
             url = f"{COINGECKO_BASE_URL}/coins/{token_id}/ohlc"
             params = {
-                'vs_currency': 'usd',
-                'days': '14'
+                'vs_currency': 'usd',  # Required parameter
+                'days': '14'           # Will give us 4h intervals based on docs
             }
             headers = {
                 'x-cg-pro-api-key': COINGECKO_API_KEY
             }
-
+            
             response = requests.get(url, headers=headers, params=params)
-            # Handle rate limiting
-            if response.status_code == 429:
-                print("🕐 Rate limit hit, waiting 60 seconds...")
-                time.sleep(60)
-                response = requests.get(url, headers=headers, params=params)
             
             # Print raw response for debugging
             print("\n🔍 Raw API Response:")
@@ -648,28 +607,37 @@ class ListingArbSystem:
         next_run = datetime.now() + timedelta(hours=HOURS_BETWEEN_RUNS)
         print(f"\n⏳ Next round starts in {HOURS_BETWEEN_RUNS} hours (at {next_run.strftime('%H:%M:%S')})")
 
+
 def main():
-    """Main function to run the Listing Arb system"""
+    """Main function to run token discovery"""
     print("\n🌙 Moon Dev's Listing Arb System Starting Up! 🚀")
-    print(f"⚙️ Configuration:")
-    print(f"  • Hours between full runs: {HOURS_BETWEEN_RUNS}")
-    print(f"  • Parallel processes: {PARALLEL_PROCESSES}")
-    print(f"  • Minimum volume: ${MIN_VOLUME_USD:,.2f}")
-    print(f"📝 Reading discovered tokens from: {DISCOVERED_TOKENS_FILE.absolute()}")
-    print(f"📝 Saving AI analysis to: {AI_ANALYSIS_FILE.absolute()}")
+    print(f"📝 Results will be saved to: {AI_ANALYSIS_FILE.absolute()}")
     
     system = ListingArbSystem()
     
     try:
-        round_number = 1
         while True:
-            print(f"\n🔄 Starting Round {round_number}")
-            system.run_analysis_cycle()
+            start_time = datetime.now()
+            print(f"\n🔄 Starting new analysis round at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
             
-            next_round = datetime.now() + timedelta(hours=HOURS_BETWEEN_RUNS)
-            print(f"\n⏳ Next round starts in {HOURS_BETWEEN_RUNS} hours (at {next_round.strftime('%H:%M:%S')})")
+            # Load discovered tokens
+            tokens = system.load_discovered_tokens()
+            
+            # Filter and analyze tokens
+            filtered_tokens = system.filter_tokens(tokens)
+            
+            # Save results
+            system.save_analysis(filtered_tokens)
+            
+            # Calculate next run time
+            next_run = start_time.timestamp() + (HOURS_BETWEEN_RUNS * 3600)
+            next_run_str = datetime.fromtimestamp(next_run).strftime('%Y-%m-%d %H:%M:%S')
+            
+            print(f"\n⏳ Next run in {HOURS_BETWEEN_RUNS} hours at {next_run_str}")
+            print(f"💡 Press Ctrl+C to stop")
+            
+            # Sleep until next run
             time.sleep(HOURS_BETWEEN_RUNS * 3600)
-            round_number += 1
             
     except KeyboardInterrupt:
         print("\n👋 Moon Dev's Listing Arb System signing off!")

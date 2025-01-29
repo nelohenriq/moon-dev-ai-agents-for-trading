@@ -65,9 +65,8 @@ Rate Limits:
 4. Always do your own research (DYOR)
 5. The copybot follow list is Moon Dev's personal list and should not be used alone
 
-Need an API key? Visit: https://algotradecamp.com join the bootcamp and then quant elite once inside to get access to the api key.
+Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
 """
-
 
 import os
 import pandas as pd
@@ -96,6 +95,8 @@ class MoonDevAPI:
         self.base_url = base_url
         self.headers = {'X-API-Key': self.api_key} if self.api_key else {}
         self.session = requests.Session()
+        self.max_retries = 3
+        self.chunk_size = 8192  # Smaller chunk size for more reliable downloads
         
         print("🌙 Moon Dev API: Ready to rock! 🚀")
         print(f"📂 Cache directory: {self.base_dir.absolute()}")
@@ -108,7 +109,7 @@ class MoonDevAPI:
     def _fetch_csv(self, filename, limit=None):
         """Fetch CSV data from the API"""
         try:
-            print(f"🚀 Moon Dev API: Fetching {filename} {'with limit '+str(limit) if limit else ''}...")
+            print(f"🚀 Moon Dev API: Fetching {filename}{'with limit '+str(limit) if limit else ''}...")
             
             url = f'{self.base_url}/files/{filename}'
             if limit:

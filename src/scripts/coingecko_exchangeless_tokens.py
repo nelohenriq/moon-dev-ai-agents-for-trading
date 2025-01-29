@@ -15,7 +15,6 @@ from pathlib import Path
 from dotenv import load_dotenv
 from termcolor import colored, cprint
 
-
 # Load environment variables
 load_dotenv()
 
@@ -34,27 +33,23 @@ DO_NOT_ANALYZE = [
     'usdc',            # USDC
 ]
 
-# 📁 File Paths
-# Get project root path relative to this script
-PROJECT_ROOT = Path(__file__).parent.parent.parent
-DISCOVERED_TOKENS_FILE = PROJECT_ROOT / "src" / "data" / "discovered_tokens.csv"
+COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
 
-# Ensure directory exists
-DISCOVERED_TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        
+# 📁 File Paths
+DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
 
 class CoinGeckoTokenFinder:
     """Utility class for finding promising Solana tokens 🦎"""
     
     def __init__(self):
-        self.api_key = os.getenv("COINGECKO_API_KEY")
-        if not self.api_key:
+        
+        if not COINGECKO_API_KEY:
             raise ValueError("⚠️ COINGECKO_API_KEY not found in environment variables!")
             
         self.base_url = "https://api.coingecko.com/api/v3"
         self.headers = {
-            "x-cg-api-key": self.api_key,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-cg-api-key": COINGECKO_API_KEY,
         }
         self.api_calls = 0
         print("🦎 Moon Dev's CoinGecko Token Finder initialized!")
@@ -207,6 +202,12 @@ class CoinGeckoTokenFinder:
             'discovered_at': datetime.now().isoformat()
         } for token in tokens])
 
+        # Get project root path relative to this script
+        PROJECT_ROOT = Path(__file__).parent.parent.parent
+        DISCOVERED_TOKENS_FILE = PROJECT_ROOT / "src" / "data" / "discovered_tokens.csv"
+        
+        # Ensure directory exists
+        DISCOVERED_TOKENS_FILE.parent.mkdir(parents=True, exist_ok=True)
         
         # Save to CSV
         df.to_csv(DISCOVERED_TOKENS_FILE, index=False)
@@ -215,10 +216,14 @@ class CoinGeckoTokenFinder:
     def load_discovered_tokens(self) -> pd.DataFrame:
         """Load previously discovered tokens"""
         if DISCOVERED_TOKENS_FILE.exists():
-            df = pd.read_csv(DISCOVERED_TOKENS_FILE)
-            print(f"\n📚 Loaded {len(df)} previously discovered tokens")
-            return df
-        return pd.DataFrame()
+            try:
+                df = pd.read_csv(DISCOVERED_TOKENS_FILE)
+                print(f"\n📚 Loaded {len(df)} previously discovered tokens")
+                return df
+            except pd.errors.EmptyDataError:
+                print("\n📝 Creating new discovered tokens file")
+                return pd.DataFrame(columns=['token_id', 'symbol', 'name', 'price', 'volume_24h', 'market_cap', 'discovered_at'])
+        return pd.DataFrame(columns=['token_id', 'symbol', 'name', 'price', 'volume_24h', 'market_cap', 'discovered_at'])
 
 def main():
     """Main function to run token discovery"""

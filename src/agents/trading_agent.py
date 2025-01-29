@@ -122,7 +122,7 @@ class TradingAgent:
             )
 
             # Parse the response - handle both string and list responses
-            response = message.content
+            response = message.choices[0].message.content
             if isinstance(response, list):
                 # Extract text from TextBlock objects if present
                 response = "\n".join(

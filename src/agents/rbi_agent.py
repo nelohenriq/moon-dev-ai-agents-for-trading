@@ -31,16 +31,10 @@ Remember: Past performance doesn't guarantee future results!
 
 # DeepSeek Model Selection per Agent
 # Set to "0" to use config.py's AI_MODEL setting
-# Options for each: "deepseek-chat" (faster) or "deepseek-reasoner" (more analytical)
-<<<<<<< HEAD
-RESEARCH_MODEL = "deepseek-r1:7b"  # Analyzes strategies thoroughly
-BACKTEST_MODEL = "deepseek-r1:7b"      # Creative in implementing strategies
-DEBUG_MODEL = "qwen2.5-coder:3b"     # Careful code analysis
-=======
+# Options for each: "deepseek-chat" (faster) or "deepseek-reasoner" (more analytical)   # Careful code analysis
 RESEARCH_MODEL ="deepseek-r1-distill-llama-70b"  # use ollama locally "deepseek-r1:1.5b" # use groq model deepseek-r1-distill-llama-70b # Analyzes strategies thoroughly
 BACKTEST_MODEL ="deepseek-r1-distill-llama-70b"  # use ollama locally "deepseek-r1:1.5b" # use groq model deepseek-r1-distill-llama-70b # Creative in implementing strategies
 DEBUG_MODEL ="deepseek-r1-distill-llama-70b"  # use ollama locally "qwen2.5-coder:3b"    # use groq model deepseek-r1-distill-llama-70b # Careful code analysis
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
 
 # Agent Prompts
 
@@ -557,7 +551,7 @@ def process_trading_idea(link: str) -> None:
     
     try:
         # Create output directories if they don't exist
-        for dir in [DATA_DIR, RESEARCH_DIR, BACKTEST_DIR, FINAL_BACKTEST_DIR]:
+        for dir in [DATA_DIR, RESEARCH_DIR, BACKTEST_DIR, FINAL_BACKTEST_DIR, PACKAGE_DIR]:
             dir.mkdir(parents=True, exist_ok=True)
             
         print("💭 Processing raw strategy idea...")

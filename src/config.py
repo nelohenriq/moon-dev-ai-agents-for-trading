@@ -97,13 +97,8 @@ stop_loss_perctentage = -.24
 EXIT_ALL_POSITIONS = False
 DO_NOT_TRADE_LIST = ['777']
 CLOSED_POSITIONS_TXT = '777'
-<<<<<<< HEAD
 minimum_trades_in_last_hour = 777
-=======
-<<<<<<< HEAD
-minimum_trades_in_last_hour = 777
-=======
-minimum_trades_in_last_hour = 777
+
 """
 🌙 Moon Dev's Configuration File
 Built with love by Moon Dev 🚀
@@ -200,7 +195,6 @@ STRATEGY_MIN_CONFIDENCE = 0.7  # Minimum confidence to act on strategy signals
 # Sleep time between main agent runs
 SLEEP_BETWEEN_RUNS_MINUTES = 15  # How long to sleep between agent runs 🕒
 
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
 # Future variables (not active yet) 🔮
 sell_at_multiple = 3
 USDC_SIZE = 1
@@ -211,5 +205,3 @@ EXIT_ALL_POSITIONS = False
 DO_NOT_TRADE_LIST = ['777']
 CLOSED_POSITIONS_TXT = '777'
 minimum_trades_in_last_hour = 777
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa

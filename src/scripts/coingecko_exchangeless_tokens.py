@@ -33,7 +33,6 @@ DO_NOT_ANALYZE = [
     'usdc',            # USDC
 ]
 
-<<<<<<< HEAD
 # 📁 File Paths
 DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
 
@@ -41,7 +40,6 @@ class CoinGeckoTokenFinder:
     """Utility class for finding promising Solana tokens 🦎"""
     
     def __init__(self):
-=======
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
 
 # 📁 File Paths
@@ -81,12 +79,8 @@ class TokenFinder:
     """Utility class for finding promising Solana tokens 🦎"""
     
     def __init__(self):
-<<<<<<< HEAD
-        
         if not COINGECKO_API_KEY:
-=======
-<<<<<<< HEAD
-        print("🦎 Moon Dev's Token Finder initialized!")
+            print("🦎 Moon Dev's Token Finder initialized!")
         
     def get_solana_tokens(self) -> List[Dict]:
         """Get all Solana tokens with market data using yfinance"""
@@ -114,11 +108,8 @@ class TokenFinder:
                 continue
         
         print(f"✨ Retrieved {len(all_tokens)} tokens")
-=======
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
         self.api_key = os.getenv("COINGECKO_API_KEY")
         if not self.api_key:
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
             raise ValueError("⚠️ COINGECKO_API_KEY not found in environment variables!")
             
         self.base_url = "https://api.coingecko.com/api/v3"

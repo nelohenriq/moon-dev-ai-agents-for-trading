@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import time
 
 # Local imports
-from src import config
+from src.config import *
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens
 
@@ -73,7 +73,7 @@ Remember:
 - Cash must be stored as USDC using USDC_ADDRESS: {USDC_ADDRESS}
 """
 
-AI_MODEL = "llama3.2" # set to False for using the .env model
+AI_MODEL = "llama3.2"  # set to False for using the .env model
 
 # Load environment variables
 load_dotenv()
@@ -85,7 +85,7 @@ class TradingAgent:
         self.client = openai.OpenAI(
             base_url="http://localhost:11434/v1", api_key="ollama"
         )
-        self.model = AI_MODEL if AI_MODEL else config.AI_MODEL
+        self.model = AI_MODEL if AI_MODEL else AI_MODEL
         self.recommendations_df = pd.DataFrame(
             columns=["token", "action", "confidence", "reasoning"]
         )
@@ -95,7 +95,7 @@ class TradingAgent:
         """Analyze market data using Claude"""
         try:
             # Skip analysis for excluded tokens
-            if token in config.EXCLUDED_TOKENS:
+            if token in EXCLUDED_TOKENS:
                 print(f"⚠️ Skipping analysis for excluded token: {token}")
                 return None
 
@@ -111,8 +111,8 @@ class TradingAgent:
 
             message = self.client.chat.completions.create(
                 model=self.model,
-                max_tokens=config.AI_MAX_TOKENS,
-                temperature=config.AI_TEMPERATURE,
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
                 messages=[
                     {
                         "role": "user",
@@ -196,59 +196,61 @@ class TradingAgent:
         """Get AI-recommended portfolio allocation"""
         try:
             cprint("\n💰 Calculating optimal portfolio allocation...", "cyan")
-            max_position_size = config.usd_size * (config.MAX_POSITION_PERCENTAGE / 100)
+            max_position_size = usd_size * (MAX_POSITION_PERCENTAGE / 100)
             cprint(
-                f"🎯 Maximum position size: ${max_position_size:.2f} ({config.MAX_POSITION_PERCENTAGE}% of ${config.usd_size:.2f})",
+                f"🎯 Maximum position size: ${max_position_size:.2f} ({MAX_POSITION_PERCENTAGE}% of ${usd_size:.2f})",
                 "cyan",
             )
 
             # Get allocation from AI
-            message = self.client.chat.completions.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
-                max_tokens=config.AI_MAX_TOKENS,
-                temperature=config.AI_TEMPERATURE,
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
                 messages=[
                     {
-                    "role": "user",
-                    "content": f"""You are Moon Dev's Portfolio Allocation AI 🌙
+                        "role": "user",
+                        "content": f"""You are Moon Dev's Portfolio Allocation AI 🌙
 
                     Given:
-                    - Total portfolio size: ${config.usd_size}
-                    - Maximum position size: ${max_position_size} ({config.MAX_POSITION_PERCENTAGE}% of total)
-                    - Minimum cash (USDC) buffer: {config.CASH_PERCENTAGE}%
-                    - Available tokens: {config.MONITORED_TOKENS}
-                    - USDC Address: {config.USDC_ADDRESS}
+                    - Total portfolio size: ${usd_size}
+                    - Maximum position size: ${max_position_size} ({MAX_POSITION_PERCENTAGE}% of total)
+                    - Minimum cash (USDC) buffer: {CASH_PERCENTAGE}%
+                    - Available tokens: {MONITORED_TOKENS}
+                    - USDC Address: {USDC_ADDRESS}
 
                     Provide a portfolio allocation that:
                     1. Never exceeds max position size per token
                     2. Maintains minimum cash buffer
                     3. Returns allocation as a JSON object with token addresses as keys and USD amounts as values
-                    4. Uses exact USDC address: {config.USDC_ADDRESS} for cash allocation
+                    4. Uses exact USDC address: {USDC_ADDRESS} for cash allocation
 
                     Example format:
                     {{
                         "token_address": amount_in_usd,
-                        "{config.USDC_ADDRESS}": remaining_cash_amount  # Use exact USDC address
+                        "{USDC_ADDRESS}": remaining_cash_amount  # Use exact USDC address
                     }}""",
-                                        }
-                                    ],
-                                )
+                    }
+                ],
+            )
 
             # Parse the response
-            allocations = self.parse_allocation_response(str(message.content))
+            allocations = self.parse_allocation_response(
+                str(response.choices[0].message.content)
+            )
             if not allocations:
                 return None
 
             # Fix USDC address if needed
             if "USDC_ADDRESS" in allocations:
                 amount = allocations.pop("USDC_ADDRESS")
-                allocations[config.USDC_ADDRESS] = amount
+                allocations[USDC_ADDRESS] = amount
 
             # Validate allocation totals
             total_allocated = sum(allocations.values())
-            if total_allocated > config.usd_size:
+            if total_allocated > usd_size:
                 cprint(
-                    f"❌ Total allocation ${total_allocated:.2f} exceeds portfolio size ${config.usd_size:.2f}",
+                    f"❌ Total allocation ${total_allocated:.2f} exceeds portfolio size ${usd_size:.2f}",
                     "red",
                 )
                 return None
@@ -256,7 +258,7 @@ class TradingAgent:
             # Print allocations
             cprint("\n📊 Portfolio Allocation:", "green")
             for token, amount in allocations.items():
-                token_display = "USDC" if token == config.USDC_ADDRESS else token
+                token_display = "USDC" if token == USDC_ADDRESS else token
                 cprint(f"  • {token_display}: ${amount:.2f}", "green")
 
             return allocations
@@ -272,7 +274,7 @@ class TradingAgent:
 
             for token, amount in allocation_dict.items():
                 # Skip USDC and other excluded tokens
-                if token in config.EXCLUDED_TOKENS:
+                if token in EXCLUDED_TOKENS:
                     print(f"💵 Keeping ${amount:.2f} in {token}")
                     continue
 
@@ -310,7 +312,7 @@ class TradingAgent:
             token = row["token"]
 
             # Skip excluded tokens (USDC and SOL)
-            if token in config.EXCLUDED_TOKENS:
+            if token in EXCLUDED_TOKENS:
                 continue
 
             action = row["action"]
@@ -331,7 +333,7 @@ class TradingAgent:
                     cprint(
                         f"📉 Closing position with chunk_kill...", "white", "on_cyan"
                     )
-                    n.chunk_kill(token, config.max_usd_order_size, config.slippage)
+                    n.chunk_kill(token, max_usd_order_size, slippage)
                     cprint(f"✅ Successfully closed position", "white", "on_green")
                 except Exception as e:
                     cprint(f"❌ Error closing position: {str(e)}", "white", "on_red")
@@ -511,13 +513,13 @@ def main():
     cprint("🌙 Moon Dev AI Trading System Starting Up! 🚀", "white", "on_blue")
 
     agent = TradingAgent()
-    INTERVAL = config.SLEEP_BETWEEN_RUNS_MINUTES * 60  # Convert minutes to seconds
+    INTERVAL = SLEEP_BETWEEN_RUNS_MINUTES * 60  # Convert minutes to seconds
 
     while True:
         try:
             agent.run_trading_cycle()
 
-            next_run = datetime.now() + timedelta(minutes=config.SLEEP_BETWEEN_RUNS_MINUTES)
+            next_run = datetime.now() + timedelta(minutes=SLEEP_BETWEEN_RUNS_MINUTES)
             cprint(
                 f"\n⏳ AI Agent run complete. Next run at {next_run.strftime('%Y-%m-%d %H:%M:%S')}",
                 "white",

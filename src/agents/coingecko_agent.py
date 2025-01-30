@@ -173,9 +173,9 @@ Help Moon Dev keep track of the trading journey! 🎯
 """
 
 # 🤖 Agent Model Selection
-AGENT_ONE_MODEL = "llama3.2"  # Use Ollama for Agent One
-AGENT_TWO_MODEL = "llama3.2"  # Use Ollama for Agent Two
-TOKEN_EXTRACTOR_MODEL = "llama3.2"  # Use Ollama for token extraction
+AGENT_ONE_MODEL = "deepseek-r1:7b"  # Use Ollama for Agent One
+AGENT_TWO_MODEL = "deepseek-r1:7b"  # Use Ollama for Agent Two
+TOKEN_EXTRACTOR_MODEL = "deepseek-r1:1.5b"  # Use Ollama for token extraction
 
 # 🎮 Game Configuration
 MINUTES_BETWEEN_ROUNDS = 30  # Time to wait between trading rounds (in minutes)

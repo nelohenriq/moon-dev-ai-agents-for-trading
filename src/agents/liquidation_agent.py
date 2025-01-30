@@ -71,21 +71,12 @@ Market Data:
 
 Technical Context:
 {market_data}
-<<<<<<< HEAD
 =======
 
 Large long liquidations often indicate potential bottoms (shorts taking profit)
 Large short liquidations often indicate potential tops (longs taking profit)
 Consider the ratio of long vs short liquidations and their relative changes
-<<<<<<< HEAD
-
-**IMPORTANT**: 
-Respond ONLY in the required 3-line format. 
-Do not include any additional text or explanations.
-=======
 **IMPORTANT**: Respond ONLY in the required 3-line format. Do not include any additional text or explanations.
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
 """
 
 
@@ -220,25 +211,11 @@ class LiquidationAgent(BaseAgent):
                 ]
 
                 # Convert timestamp to datetime (UTC)
-                df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
-                current_time = datetime.utcnow()
-
-<<<<<<< HEAD
-                df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
-                current_time = datetime.utcnow()
-
-=======
-=======
                 df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-<<<<<<< HEAD
                 current_time = datetime.utcnow()
-=======
                 current_time = datetime.datetime.now(datetime.UTC)
                 
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
                 # Calculate time windows
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                 fifteen_min = current_time - timedelta(minutes=15)
                 one_hour = current_time - timedelta(hours=1)
                 four_hours = current_time - timedelta(hours=4)
@@ -443,60 +420,30 @@ class LiquidationAgent(BaseAgent):
             traceback.print_exc()
             return None, None
 
-    def _analyze_opportunity(
-        self, current_longs, current_shorts, previous_longs, previous_shorts
-    ):
+    def _analyze_opportunity(self, current_longs, current_shorts, previous_longs, previous_shorts):
         """Get AI analysis of the liquidation event"""
         try:
             # Calculate percentage changes
-<<<<<<< HEAD
             pct_change_longs = ((current_longs - previous_longs) / previous_longs) * 100 if previous_longs > 0 else 0
             pct_change_shorts = ((current_shorts - previous_shorts) / previous_shorts) * 100 if previous_shorts > 0 else 0
             total_pct_change = ((current_longs + current_shorts - previous_longs - previous_shorts) / 
-                            (previous_longs + previous_shorts)) * 100 if (previous_longs + previous_shorts) > 0 else 0
+                              (previous_longs + previous_shorts)) * 100 if (previous_longs + previous_shorts) > 0 else 0
             
-            # Get market data silently (XRP as per the example)
-            market_data = hl.get_data(
-                symbol="LINK",
-=======
-            pct_change_longs = (
-                ((current_longs - previous_longs) / previous_longs) * 100
-                if previous_longs > 0
-                else 0
-            )
-            pct_change_shorts = (
-                ((current_shorts - previous_shorts) / previous_shorts) * 100
-                if previous_shorts > 0
-                else 0
-            )
-            total_pct_change = (
-                (
-                    (current_longs + current_shorts - previous_longs - previous_shorts)
-                    / (previous_longs + previous_shorts)
-                )
-                * 100
-                if (previous_longs + previous_shorts) > 0
-                else 0
-            )
-
             # Get market data silently (BTC by default since it leads the market)
             market_data = hl.get_data(
-                symbol="XRP",
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
+                symbol="BTC",
                 timeframe=TIMEFRAME,
                 bars=LOOKBACK_BARS,
-                add_indicators=True,
+                add_indicators=True
             )
-
+            
             if market_data is None or market_data.empty:
-                print(
-                    "⚠️ Could not fetch market data, proceeding with liquidation analysis only"
-                )
+                print("⚠️ Could not fetch market data, proceeding with liquidation analysis only")
                 market_data_str = "No market data available"
             else:
                 # Format market data nicely - show last 5 candles
                 market_data_str = market_data.tail(5).to_string()
-
+            
             # Prepare the context
             context = LIQUIDATION_ANALYSIS_PROMPT.format(
                 pct_change=f"{total_pct_change:.2f}",
@@ -509,116 +456,77 @@ class LiquidationAgent(BaseAgent):
                 pct_change_shorts=pct_change_shorts,
                 LOOKBACK_BARS=LOOKBACK_BARS,
                 TIMEFRAME=TIMEFRAME,
-                market_data=market_data_str,
+                market_data=market_data_str
             )
-
+            
             print(f"\n🤖 Analyzing liquidation spike with AI...")
-
-<<<<<<< HEAD
-
-            # Get AI analysis
-            response = self.client.chat.completions.create(
+            
+            # Get AI analysis using instance settings
+            message = self.client.messages.create(
                 model=self.ai_model,
-                messages=[{"role": "user", "content": context}],
-=======
-            # Get AI analysis using Ollama client
-            response = self.client.chat.completions.create(
-                model=self.ai_model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a trading assistant. Always respond in exactly 3 lines: Line 1 must be BUY, SELL, or NOTHING. Line 2 must be a short reason. Line 3 must be Confidence: X% where X is 0-100.",
-                    },
-                    {"role": "user", "content": context},
-                ],
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
-                temperature=self.ai_temperature,
                 max_tokens=self.ai_max_tokens,
+                temperature=self.ai_temperature,
+                messages=[{
+                    "role": "user",
+                    "content": context
+                }]
             )
-<<<<<<< HEAD
             
-            ai_response = response.choices[0].message.content.strip()
-            
-            # Parse AI response
-            lines = ai_response.split('\n')
-            if len(lines) >= 3:
-                action = lines[0].strip().upper()
-                reason = lines[1].strip()
-                confidence = lines[2].split(':')[1].strip().rstrip('%')
-                
-                # Validate action
-                if action not in ['BUY', 'SELL', 'NOTHING']:
-                    action = 'NOTHING'
-                    reason = 'Invalid AI response'
-                    confidence = '0'
-                
-                # Ensure confidence is a valid number
-                try:
-                    confidence = int(confidence)
-                except ValueError:
-                    confidence = 0
-                
-                return action, reason, confidence
-            else:
-                return 'NOTHING', 'Invalid AI response format', 0
-            
-        except Exception as e:
-            print(f"❌ Error in AI analysis: {str(e)}")
-            traceback.print_exc()
-            return 'NOTHING', 'Error in analysis', 0
-            
-=======
-
             # Handle response
-            if not response or not response.choices:
+            if not message or not message.content:
                 print("❌ No response from AI")
                 return None
-
-            # Extract the response text
-            analysis = response.choices[0].message.content
-
+                
+            # Handle TextBlock response
+            response = message.content
+            if isinstance(response, list):
+                # If it's a list of TextBlocks, get the text from the first one
+                if len(response) > 0 and hasattr(response[0], 'text'):
+                    response = response[0].text
+                else:
+                    print("❌ Invalid response format from AI")
+                    return None
+                    
             # Parse response - handle both newline and period-based splits
-            lines = [line.strip() for line in analysis.split("\n") if line.strip()]
+            lines = [line.strip() for line in response.split('\n') if line.strip()]
             if not lines:
                 print("❌ Empty response from AI")
                 return None
-
+                
             # First line should be the action
             action = lines[0].strip().upper()
-            if action not in ["BUY", "SELL", "NOTHING"]:
-                print(f"⚠️ Invalid action: {action}. Defaulting to NOTHING.")
-                action = "NOTHING"
-
+            if action not in ['BUY', 'SELL', 'NOTHING']:
+                print(f"⚠️ Invalid action: {action}")
+                return None
+                
             # Rest is analysis
             analysis = lines[1] if len(lines) > 1 else ""
-
+            
             # Extract confidence from third line
             confidence = 50  # Default confidence
             if len(lines) > 2:
                 try:
                     import re
-
-                    matches = re.findall(r"(\d+)%", lines[2])
+                    matches = re.findall(r'(\d+)%', lines[2])
                     if matches:
                         confidence = int(matches[0])
                 except:
                     print("⚠️ Could not parse confidence, using default")
-
+            
             return {
-                "action": action,
-                "analysis": analysis,
-                "confidence": confidence,
-                "pct_change": total_pct_change,
-                "pct_change_longs": pct_change_longs,
-                "pct_change_shorts": pct_change_shorts,
+                'action': action,
+                'analysis': analysis,
+                'confidence': confidence,
+                'pct_change': total_pct_change,
+                'pct_change_longs': pct_change_longs,
+                'pct_change_shorts': pct_change_shorts
             }
-
+            
         except Exception as e:
             print(f"❌ Error in AI analysis: {str(e)}")
             traceback.print_exc()
             return None
 
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
     def _format_announcement(self, analysis):
         """Format liquidation analysis into a speech-friendly message"""
         try:
@@ -743,13 +651,10 @@ class LiquidationAgent(BaseAgent):
 
                                     # Print detailed analysis
                                     print("\n" + "╔" + "═" * 50 + "╗")
-<<<<<<< HEAD
                                     print("║        🌙 Moon Dev's Liquidation Analysis 💦        ║")
-=======
                                     print(
                                         "║         🌙 Moon Dev's Liquidation Analysis 💦       ║"
                                     )
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                                     print("╠" + "═" * 50 + "╣")
                                     print(f"║  Action: {analysis['action']:<41} ║")
                                     print(

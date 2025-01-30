@@ -22,7 +22,7 @@ load_dotenv()
 # ⚙️ Configuration Constants
 HOURS_BETWEEN_RUNS = 24
 MAJOR_EXCHANGES = ['binance', 'coinbase']  # Exchanges to exclude
-MIN_VOLUME_USD = 100_000  # Minimum 24h volume in USD
+MIN_VOLUME_USD = 100000  # Minimum 24h volume in USD
 SLEEP_ON_RATE_LIMIT = 60  # Seconds to sleep when rate limited
 
 # 🚫 Tokens to Skip (e.g. stablecoins, wrapped tokens)

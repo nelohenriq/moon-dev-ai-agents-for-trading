@@ -361,4 +361,4 @@ class StrategyAgent:
 
 if __name__ == "__main__":
     agent = StrategyAgent()
-    agent.execute_strategy()
+    agent.execute_strategy_signals()

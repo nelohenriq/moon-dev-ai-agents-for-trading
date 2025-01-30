@@ -126,7 +126,8 @@ class RiskAgent(BaseAgent):
                 "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "balance": current_value,
             }
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            df = pd.concat([df, pd.DataFrame([new_row], columns=df.columns)], ignore_index=True)
+
 
             # Save updated log
             df.to_csv(balance_file, index=False)

@@ -77,11 +77,7 @@ class FundingArbAgent(BaseAgent):
         super().__init__('fundingarb')  # Initialize base agent with type
         
         # Set AI parameters - use config values unless overridden
-<<<<<<< HEAD
-        self.ai_model = AI_MODEL if AI_MODEL else "llama3.2"  # Use Ollama model
-=======
-        self.ai_model = AI_MODEL if AI_MODEL else "deepseek-r1:7b"  # Use Ollama model
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
+        self.ai_model = AI_MODEL if AI_MODEL else "llama-3.3-70b-versatile"  # Use Ollama model
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else 0.5
         self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else 150
         
@@ -98,11 +94,19 @@ class FundingArbAgent(BaseAgent):
         # Load environment variables
         load_dotenv()
         
-        # Initialize Ollama client
+        """ # Initialize Ollama client
         self.client = OpenAI(
             base_url="http://localhost:11434/v1",  # Ollama's OpenAI-compatible endpoint
             api_key="ollama"  # API key is not required for Ollama
+        ) """
+
+        # Initialize Groq client
+        self.client = OpenAI(
+            base_url="https://api.groq.com/openai/v1",  # Groq's OpenAI-compatible endpoint
+            api_key=os.getenv("GROQ_API_KEY")  
         )
+
+
         
         # Initialize pyttsx3 TTS engine
         self.tts_engine = pyttsx3.init()

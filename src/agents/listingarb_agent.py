@@ -6,36 +6,19 @@ Runs every 24 hours to maintain an updated list.
 
 import os
 import pandas as pd
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
 import time
 import openai
 import numpy as np
 import json
-=======
 import yfinance as yf
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
 import time
 import openai
 import numpy as np
-<<<<<<< HEAD
 import json
-=======
-<<<<<<< HEAD
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
 from datetime import datetime, timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 from typing import List
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
->>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
 import concurrent.futures
 from datetime import datetime, timedelta
 from collections import deque

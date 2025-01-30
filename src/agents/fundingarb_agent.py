@@ -77,7 +77,11 @@ class FundingArbAgent(BaseAgent):
         super().__init__('fundingarb')  # Initialize base agent with type
         
         # Set AI parameters - use config values unless overridden
+<<<<<<< HEAD
+        self.ai_model = AI_MODEL if AI_MODEL else "llama3.2"  # Use Ollama model
+=======
         self.ai_model = AI_MODEL if AI_MODEL else "deepseek-r1:7b"  # Use Ollama model
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else 0.5
         self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else 150
         

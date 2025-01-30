@@ -587,7 +587,9 @@ def process_trading_idea(idea: str) -> None:
         print(f"✨ Final backtest saved at: {final_file}")
         
     except Exception as e:
-        print(f"\n❌ Error processing idea: {str(e)}")
+        cprint(f"\n❌ Error processing idea: {str(e)}", "red")
+        cprint("🔄 Continuing with next idea...\n", "yellow")
+
         raise
 
 def main():

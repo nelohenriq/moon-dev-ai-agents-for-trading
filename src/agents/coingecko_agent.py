@@ -190,8 +190,8 @@ EXTRACTOR_MAX_TOKENS = 100  # Keep it brief, just token lists (50-100 words)
 SYNOPSIS_MAX_TOKENS = 100  # Brief round summaries (50-100 words)
 
 # Temperature (Controls response creativity/randomness):
-AGENT_ONE_TEMP = 0.7  # Balanced creativity for technical analysis (0.5-0.8)
-AGENT_TWO_TEMP = 0.7  # Balanced creativity for fundamental analysis (0.5-0.8)
+AGENT_ONE_TEMP = 0.5  # Balanced creativity for technical analysis (0.5-0.8)
+AGENT_TWO_TEMP = 0.5  # Balanced creativity for fundamental analysis (0.5-0.8)
 EXTRACTOR_TEMP = 0  # Zero creativity, just extract tokens (always 0)
 SYNOPSIS_TEMP = 0.3  # Low creativity for consistent summaries (0.2-0.4)
 
@@ -394,11 +394,11 @@ class CoinGeckoAPI:
             
         # Map symbols to CoinGecko IDs
         symbol_to_id = {
+            "XRP": "ripple",
+            "LINK": "chainlink",
             "BTC": "bitcoin",
             "ETH": "ethereum",
-            "XRP": "ripple",
             "LTC": "litecoin",
-            "LINK": "chainlink"
             # Add more mappings as needed
         }
         
@@ -636,8 +636,8 @@ class MultiAgentSystem:
             # Get fresh market data
             cprint("📊 Gathering Market Intelligence...", "white", "on_magenta")
             market_data = {
-                "bitcoin": self.api.get_price("BTC", "usd"),
-                "ethereum": self.api.get_price("ETH", "usd"),
+                "bitcoin": self.api.get_price("XRP", "usd"),
+                "ethereum": self.api.get_price("LINK", "usd"),
             }
 
             # Add round history to market context

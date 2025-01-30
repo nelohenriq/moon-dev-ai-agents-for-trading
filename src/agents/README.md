@@ -1,4 +1,6 @@
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
 # ai agents 
 
 ## build list 
@@ -33,6 +35,7 @@
 ## moon dev api is in early alpha testing to host data i've been collecting like liquidations, open interest, funding rates, new token launches on solana, solana "good" traders, & recent trades from those traders. apply for access as an alpha tester by posting in the #members_chat with what you're looking to build with the api.
 
 =======
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
 # ai agents 
 
 ## build list 
@@ -58,8 +61,13 @@
 
     - possibly look thorugh recently added coins, they are fresh on coingecko 
 
+[] coin gecko agent ehancements, its a vast api so i wanna look thorugh it and come up with ideas
+    - top gainers and losers could be cool to work off as a scanner: https://docs.coingecko.com/reference/coins-top-gainers-losers
 
 ## Need an API key? for a limited time, bootcamp members get free api keys for claude, openai, helius, birdeye & quant elite gets access to the moon dev api. join here: https://algotradecamp.com
 
+<<<<<<< HEAD
+=======
 >>>>>>> 24ce5da06e99ad946511f996b5443e1f3370a903
 >>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007

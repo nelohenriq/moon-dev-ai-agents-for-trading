@@ -55,7 +55,7 @@ SYMBOL_NAMES = {
 from src import config
 
 # Only set these if you want to override config.py settings
-AI_MODEL = False  # Set to model name to override config.AI_MODEL
+AI_MODEL = "deepseek-r1:1.5b"  # Set to model name to override config.AI_MODEL
 AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
 AI_MAX_TOKENS = 25  # Set > 0 to override config.AI_MAX_TOKENS
 
@@ -92,7 +92,15 @@ class FundingAgent(BaseAgent):
         super().__init__('funding')
         
         # Set AI parameters - use config values unless overridden
+<<<<<<< HEAD
         self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL # Use Ollama model
+=======
+<<<<<<< HEAD
+        self.ai_model = AI_MODEL if AI_MODEL else config.AI_MODEL # Use Ollama model
+=======
+        self.ai_model = AI_MODEL if AI_MODEL else "deepseek-r1:1.5b"  # Use Ollama model
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
+>>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
         self.ai_temperature = AI_TEMPERATURE if AI_TEMPERATURE > 0 else config.AI_TEMPERATURE
         self.ai_max_tokens = AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
         

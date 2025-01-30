@@ -47,16 +47,26 @@ Remember:
 - Better to reject a signal than risk a bad trade
 """
 
+<<<<<<< HEAD
+=======
 AI_MODEL_OVERRIDE = "llama3.2"
 
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
 
 class StrategyAgent:
     def __init__(self):
         self.enabled_strategies = []
+<<<<<<< HEAD
+
+        self.client = openai.OpenAI(
+            base_url="http://localhost:11434/v1", api_key="ollama"
+        )
+=======
         self.client = openai.OpenAI(
             base_url="http://localhost:11434/v1", api_key="ollama"
         )
         self.model = AI_MODEL_OVERRIDE if AI_MODEL_OVERRIDE else AI_MODEL
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
         self.engine = pyttsx3.init()
         self.engine.setProperty("rate", 150)
         self.engine.setProperty("volume", 0.9)
@@ -67,9 +77,15 @@ class StrategyAgent:
 
         if ENABLE_STRATEGIES:
             try:
+<<<<<<< HEAD
+                from src.strategies.custom.real_example_strategy import RealExampleStrategy
+
+                self.enabled_strategies.extend([RealExampleStrategy()])
+=======
                 from src.strategies.custom.example_strategy import ExampleStrategy
 
                 self.enabled_strategies.extend([ExampleStrategy()])
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                 print(f"✅ Loaded {len(self.enabled_strategies)} strategies!")
                 for strategy in self.enabled_strategies:
                     print(f"  • {strategy.name}")
@@ -89,8 +105,15 @@ class StrategyAgent:
 
             signals_str = json.dumps(signals, indent=2)
 
+<<<<<<< HEAD
+            message = self.client.chat.completions.create(
+                model="deepseek-r1:1.5b",
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
+=======
             response = self.client.chat.completions.create(
                 model=self.model,  # Replace with your local model name
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                 messages=[
                     {
                         "role": "user",
@@ -100,9 +123,13 @@ class StrategyAgent:
                     }
                 ],
             )
+<<<<<<< HEAD
+            response = message.choices[0].message.content
+=======
             response = response.choices[
                 0
             ].message.content  # Extract the response content
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
 
             lines = response.split("\n")
             decisions = lines[0].strip().split(",")
@@ -254,12 +281,20 @@ class StrategyAgent:
                     print(f"🎯 Target position: ${target_size:.2f} USD")
                     print(f"📈 Current position: ${current_position:.2f} USD")
 
+<<<<<<< HEAD
+                    sentiment_score = self.sentiment(token)[0]["score"]
+                    target_size *= sentiment_score
+                    self._announce(
+                        f"Executing {direction} for {token} with strength {strength}"
+                    )
+=======
                     if self.use_local:
                         sentiment_score = self.sentiment(token)[0]["score"]
                         target_size *= sentiment_score
                         self._announce(
                             f"Executing {direction} for {token} with strength {strength}"
                         )
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
 
                     if direction == "BUY":
                         if current_position < target_size:
@@ -314,4 +349,19 @@ if __name__ == "__main__":
             print(f"    Signal Strength: {signal['signal']}")
             print(f"    Metadata: {signal['metadata']}")
     else:
+<<<<<<< HEAD
         print("\n❌ No signals retrieved for the test token.")
+=======
+        print("\n❌ No signals retrieved for the test token.")
+=======
+        if self.use_local:
+            self.engine.say(message)
+            self.engine.runAndWait()
+<<<<<<< HEAD
+
+#agent = StrategyAgent()
+#signals = agent.get_signals("BTC")
+=======
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
+>>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa

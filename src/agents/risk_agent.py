@@ -44,7 +44,6 @@ from termcolor import colored, cprint
 import time
 import openai
 from dotenv import load_dotenv
-from src import config
 from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_all_tokens
 from datetime import datetime, timedelta

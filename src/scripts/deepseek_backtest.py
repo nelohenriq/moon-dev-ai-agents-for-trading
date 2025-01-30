@@ -41,7 +41,7 @@ class VWAPVolumeStrategy(Strategy):
                 print("🌑 MOON DEV: Short position entered! 🚀📉")
 
 # Download Apple (AAPL) data from Yahoo Finance
-ticker = "AAPL"
+ticker = "AMZN"
 try:
     data = yf.download(ticker, start="2020-01-01", end="2023-01-01")
     

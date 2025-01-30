@@ -10,7 +10,7 @@ Need an API key? for a limited time, bootcamp members get free api keys for clau
 import os
 import pandas as pd
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from termcolor import colored, cprint
 from dotenv import load_dotenv
 from openai import OpenAI  # Use OpenAI client for Ollama
@@ -48,7 +48,7 @@ COMPARISON_WINDOW = 15  # Default to 15 minutes for quick reactions
 from src import config
 
 # Only set these if you want to override config.py settings
-AI_MODEL = False  # Set to model name to override config.AI_MODEL
+AI_MODEL = "llama3.2"  # Set to model name to override config.AI_MODEL
 AI_TEMPERATURE = 0  # Set > 0 to override config.AI_TEMPERATURE
 AI_MAX_TOKENS = 100  # Set > 0 to override config.AI_MAX_TOKENS
 
@@ -58,27 +58,34 @@ VOICE_SPEED = 1  # Not used in pyttsx3, but kept for compatibility
 
 # AI Analysis Prompt
 LIQUIDATION_ANALYSIS_PROMPT = """
-You must respond in exactly 3 lines:
-Line 1: Only write BUY, SELL, or NOTHING
-Line 2: One short reason why
-Line 3: Only write "Confidence: X%" where X is 0-100
+You are a precise trading assistant. Your response must follow this EXACT format:
 
-Analyze market with total {pct_change}% increase in liquidations:
+LINE 1: Type ONLY one of these words: BUY, SELL, or NOTHING
+LINE 2: Brief reason (10 words or less)
+LINE 3: Type "Confidence: " followed by a number 0-100 and "%"
 
-Current Long Liquidations: ${current_longs:,.2f} ({pct_change_longs:+.1f}% change)
-Current Short Liquidations: ${current_shorts:,.2f} ({pct_change_shorts:+.1f}% change)
-Time Period: Last {LIQUIDATION_ROWS} liquidation events
+Market Data:
+- Total Liquidation Change: {pct_change}%
+- Long Liquidations: ${current_longs:,.2f} ({pct_change_longs:+.1f}%)
+- Short Liquidations: ${current_shorts:,.2f} ({pct_change_shorts:+.1f}%)
 
-Market Data (Last {LOOKBACK_BARS} {TIMEFRAME} candles):
+Technical Context:
 {market_data}
+<<<<<<< HEAD
+=======
 
 Large long liquidations often indicate potential bottoms (shorts taking profit)
 Large short liquidations often indicate potential tops (longs taking profit)
 Consider the ratio of long vs short liquidations and their relative changes
+<<<<<<< HEAD
 
 **IMPORTANT**: 
 Respond ONLY in the required 3-line format. 
 Do not include any additional text or explanations.
+=======
+**IMPORTANT**: Respond ONLY in the required 3-line format. Do not include any additional text or explanations.
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
+>>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
 """
 
 
@@ -216,10 +223,22 @@ class LiquidationAgent(BaseAgent):
                 df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
                 current_time = datetime.utcnow()
 
+<<<<<<< HEAD
                 df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
                 current_time = datetime.utcnow()
 
+=======
+=======
+                df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
+<<<<<<< HEAD
+                current_time = datetime.utcnow()
+=======
+                current_time = datetime.datetime.now(datetime.UTC)
+                
+>>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+>>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
                 # Calculate time windows
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                 fifteen_min = current_time - timedelta(minutes=15)
                 one_hour = current_time - timedelta(hours=1)
                 four_hours = current_time - timedelta(hours=4)
@@ -430,6 +449,16 @@ class LiquidationAgent(BaseAgent):
         """Get AI analysis of the liquidation event"""
         try:
             # Calculate percentage changes
+<<<<<<< HEAD
+            pct_change_longs = ((current_longs - previous_longs) / previous_longs) * 100 if previous_longs > 0 else 0
+            pct_change_shorts = ((current_shorts - previous_shorts) / previous_shorts) * 100 if previous_shorts > 0 else 0
+            total_pct_change = ((current_longs + current_shorts - previous_longs - previous_shorts) / 
+                            (previous_longs + previous_shorts)) * 100 if (previous_longs + previous_shorts) > 0 else 0
+            
+            # Get market data silently (XRP as per the example)
+            market_data = hl.get_data(
+                symbol="LINK",
+=======
             pct_change_longs = (
                 ((current_longs - previous_longs) / previous_longs) * 100
                 if previous_longs > 0
@@ -453,6 +482,7 @@ class LiquidationAgent(BaseAgent):
             # Get market data silently (BTC by default since it leads the market)
             market_data = hl.get_data(
                 symbol="XRP",
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                 timeframe=TIMEFRAME,
                 bars=LOOKBACK_BARS,
                 add_indicators=True,
@@ -484,6 +514,13 @@ class LiquidationAgent(BaseAgent):
 
             print(f"\n🤖 Analyzing liquidation spike with AI...")
 
+<<<<<<< HEAD
+
+            # Get AI analysis
+            response = self.client.chat.completions.create(
+                model=self.ai_model,
+                messages=[{"role": "user", "content": context}],
+=======
             # Get AI analysis using Ollama client
             response = self.client.chat.completions.create(
                 model=self.ai_model,
@@ -494,9 +531,43 @@ class LiquidationAgent(BaseAgent):
                     },
                     {"role": "user", "content": context},
                 ],
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                 temperature=self.ai_temperature,
                 max_tokens=self.ai_max_tokens,
             )
+<<<<<<< HEAD
+            
+            ai_response = response.choices[0].message.content.strip()
+            
+            # Parse AI response
+            lines = ai_response.split('\n')
+            if len(lines) >= 3:
+                action = lines[0].strip().upper()
+                reason = lines[1].strip()
+                confidence = lines[2].split(':')[1].strip().rstrip('%')
+                
+                # Validate action
+                if action not in ['BUY', 'SELL', 'NOTHING']:
+                    action = 'NOTHING'
+                    reason = 'Invalid AI response'
+                    confidence = '0'
+                
+                # Ensure confidence is a valid number
+                try:
+                    confidence = int(confidence)
+                except ValueError:
+                    confidence = 0
+                
+                return action, reason, confidence
+            else:
+                return 'NOTHING', 'Invalid AI response format', 0
+            
+        except Exception as e:
+            print(f"❌ Error in AI analysis: {str(e)}")
+            traceback.print_exc()
+            return 'NOTHING', 'Error in analysis', 0
+            
+=======
 
             # Handle response
             if not response or not response.choices:
@@ -547,6 +618,7 @@ class LiquidationAgent(BaseAgent):
             traceback.print_exc()
             return None
 
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
     def _format_announcement(self, analysis):
         """Format liquidation analysis into a speech-friendly message"""
         try:
@@ -671,9 +743,13 @@ class LiquidationAgent(BaseAgent):
 
                                     # Print detailed analysis
                                     print("\n" + "╔" + "═" * 50 + "╗")
+<<<<<<< HEAD
+                                    print("║        🌙 Moon Dev's Liquidation Analysis 💦        ║")
+=======
                                     print(
                                         "║         🌙 Moon Dev's Liquidation Analysis 💦       ║"
                                     )
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
                                     print("╠" + "═" * 50 + "╣")
                                     print(f"║  Action: {analysis['action']:<41} ║")
                                     print(

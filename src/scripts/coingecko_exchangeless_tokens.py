@@ -33,6 +33,7 @@ DO_NOT_ANALYZE = [
     'usdc',            # USDC
 ]
 
+<<<<<<< HEAD
 # 📁 File Paths
 DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
 
@@ -40,14 +41,90 @@ class CoinGeckoTokenFinder:
     """Utility class for finding promising Solana tokens 🦎"""
     
     def __init__(self):
+=======
+COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
+
+# 📁 File Paths
+DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
+
+# 📄 Predefined list of Solana tokens (add more as needed)
+SOLANA_TOKENS = [
+    'SOL-USD',  # Solana
+    'SRM-USD',  # Serum
+    'FTT-USD',  # FTX Token
+    'RAY-USD',  # Raydium
+    'STEP-USD', # Step Finance
+    'MNGO-USD', # Mango Markets
+    'ORCA-USD', # Orca
+    'ATLAS-USD', # Star Atlas
+    'POLIS-USD', # Star Atlas DAO
+    'COPE-USD', # COPE
+    'OXY-USD',  # Oxygen
+    'MEDIA-USD', # Media Network
+    'LIKE-USD', # Only1
+    'SUNNY-USD', # Sunny Aggregator
+    'SLND-USD', # Solend
+    'PORT-USD', # Port Finance
+    'SLRS-USD', # Solrise Finance
+    'SNY-USD',  # Synthetify
+    'MER-USD',  # Mercurial Finance
+    'GRAPE-USD', # Grape Protocol
+    'KIN-USD',  # Kin
+    'SAMO-USD', # Samoyedcoin
+    'WOOF-USD', # WOOF
+    'SHDW-USD', # GenesysGo Shadow
+    'mSOL-USD', # Marinade Staked SOL
+    'scnSOL-USD', # Socean Staked SOL
+]
+
+class TokenFinder:
+    """Utility class for finding promising Solana tokens 🦎"""
+    
+    def __init__(self):
+<<<<<<< HEAD
+        
+        if not COINGECKO_API_KEY:
+=======
+<<<<<<< HEAD
+        print("🦎 Moon Dev's Token Finder initialized!")
+        
+    def get_solana_tokens(self) -> List[Dict]:
+        """Get all Solana tokens with market data using yfinance"""
+        print("\n🔍 Getting Solana tokens from Yahoo Finance...")
+        all_tokens = []
+
+        for token in SOLANA_TOKENS:
+            try:
+                ticker = yf.Ticker(token)
+                data = ticker.history(period='1d', interval='1m')  # Fetch 1-day data
+                
+                if not data.empty:
+                    token_info = {
+                        'id': token,
+                        'name': token,  # You may want to map this to actual names
+                        'symbol': token.split('-')[0],
+                        'current_price': data['Close'].iloc[-1],
+                        'total_volume': data['Volume'].sum(),  # Total volume for the day
+                        'market_cap': None  # yfinance does not provide market cap for all tokens
+                    }
+                    all_tokens.append(token_info)
+                    print(f"📊 Retrieved data for {token}")
+            except Exception as e:
+                print(f"⚠️ Error fetching data for {token}: {str(e)}")
+                continue
+        
+        print(f"✨ Retrieved {len(all_tokens)} tokens")
+=======
+>>>>>>> 1045544586a9494c6c530cfdf6880cf1ae9080fa
         self.api_key = os.getenv("COINGECKO_API_KEY")
         if not self.api_key:
+>>>>>>> 08f5512040c5811ff908f0df6228e9b1d45cd007
             raise ValueError("⚠️ COINGECKO_API_KEY not found in environment variables!")
             
         self.base_url = "https://api.coingecko.com/api/v3"
         self.headers = {
-            "x-cg-api-key": self.api_key,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-cg-api-key": COINGECKO_API_KEY,
         }
         self.api_calls = 0
         print("🦎 Moon Dev's CoinGecko Token Finder initialized!")

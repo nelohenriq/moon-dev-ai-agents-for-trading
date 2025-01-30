@@ -290,7 +290,6 @@ class StrategyAgent:
 
     def _announce(self, message):
         print(f"\n🗣️ {message}")
-<<<<<<< HEAD
         self.engine.say(message)
         self.engine.runAndWait()
 
@@ -316,8 +315,3 @@ if __name__ == "__main__":
             print(f"    Metadata: {signal['metadata']}")
     else:
         print("\n❌ No signals retrieved for the test token.")
-=======
-        if self.use_local:
-            self.engine.say(message)
-            self.engine.runAndWait()
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542

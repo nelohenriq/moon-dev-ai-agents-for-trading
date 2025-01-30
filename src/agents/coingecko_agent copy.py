@@ -159,9 +159,9 @@ Help Moon Dev keep track of the trading journey! 🎯
 """
 
 # 🤖 Agent Model Selection
-AGENT_ONE_MODEL = "claude-3-haiku-20240307"     # Change this to any model you want for Agent One
-AGENT_TWO_MODEL = "claude-3-sonnet-20240229"    # Change this to any model you want for Agent Two
-TOKEN_EXTRACTOR_MODEL = "claude-3-haiku-20240307"  # Fast model for token extraction
+AGENT_ONE_MODEL = "deepseek-r1:7b"     # Change this to any model you want for Agent One
+AGENT_TWO_MODEL = "deepseek-r1:1.5b"    # Change this to any model you want for Agent Two
+TOKEN_EXTRACTOR_MODEL = "llama3.2"  # Fast model for token extraction
 
 # 🎮 Game Configuration
 MINUTES_BETWEEN_ROUNDS = 30  # Time to wait between trading rounds (in minutes)
@@ -224,6 +224,7 @@ import time
 from dotenv import load_dotenv
 from termcolor import colored, cprint
 import anthropic
+import openai
 from pathlib import Path
 
 # Local imports
@@ -269,7 +270,8 @@ class AIAgent:
     def __init__(self, name: str, model: str = None):
         self.name = name
         self.model = model or AI_MODEL
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        #self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
         # Use a simpler memory file name
         self.memory_file = AGENT_MEMORY_DIR / f"{name.lower().replace(' ', '_')}.json"
         self.load_memory()
@@ -515,7 +517,8 @@ class TokenExtractorAgent:
     """Agent that extracts token/crypto symbols from conversations"""
     
     def __init__(self):
-        self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        # self.client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_KEY"))
+        self.client = openai.OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
         self.model = TOKEN_EXTRACTOR_MODEL
         self.token_history = self._load_token_history()
         cprint("🔍 Token Extractor Agent initialized!", "white", "on_cyan")

@@ -31,9 +31,9 @@ Remember: Past performance doesn't guarantee future results!
 
 # DeepSeek Model Selection per Agent
 # Options for each: "deepseek-chat" (faster) or "deepseek-reasoner" (more analytical)
-RESEARCH_MODEL = "deepseek-r1:1.5b"  # Analyzes strategies thoroughly
-BACKTEST_MODEL = "deepseek-r1:1.5b"      # Creative in implementing strategies
-DEBUG_MODEL = "deepseek-r1:1.5b"     # Careful code analysis
+RESEARCH_MODEL = "deepseek-r1:7b"  # Analyzes strategies thoroughly
+BACKTEST_MODEL = "deepseek-r1:7b"      # Creative in implementing strategies
+DEBUG_MODEL = "qwen2.5-coder:3b"     # Careful code analysis
 
 # Agent Prompts
 
@@ -130,8 +130,15 @@ Return the complete fixed code.
 """
 
 def get_model_id(model):
-    """Get DR/DC identifier based on model"""
-    return "DR" if model == "deepseek-reasoner" else "DC"
+    """Get DR/DC identifier based on model type"""
+    if "7b" in model:
+        return "DR"  # Deep Reasoner for 7B models
+    elif "1.5b" in model:
+        return "DC"  # Deep Coder for 1.5B models
+    elif "coder" in model.lower():
+        return "CD"  # Deep Coder for coder models
+    else:
+        return "DR"  # Default to DR for other cases
 
 import os
 import time

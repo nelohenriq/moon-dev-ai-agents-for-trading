@@ -3,7 +3,7 @@
 Built with love by Moon Dev 🚀
 """
 
-from src import config
+from src.config import *
 import requests
 import pandas as pd
 import pprint
@@ -90,7 +90,7 @@ def token_overview(address):
         result['sell_percentage'] = sell_percentage
 
         # Check if trade1h is bigger than MIN_TRADES_LAST_HOUR
-        result['minimum_trades_met'] = True if trade1h >= config.MIN_TRADES_LAST_HOUR else False
+        result['minimum_trades_met'] = True if trade1h >= MIN_TRADES_LAST_HOUR else False
 
         # Extract price changes over different timeframes
         price_changes = {k: v for k, v in overview_data.items() if 'priceChange' in k}
@@ -253,7 +253,7 @@ def market_buy(token, amount, slippage):
                           data=json.dumps({
                               "quoteResponse": quote,
                               "userPublicKey": str(KEY.pubkey()),
-                              "prioritizationFeeLamports": config.PRIORITY_FEE  # or replace 'auto' with your specific lamport value
+                              "prioritizationFeeLamports": PRIORITY_FEE  # or replace 'auto' with your specific lamport value
                           })).json()
     #print(txRes)
     swapTx = base64.b64decode(txRes['swapTransaction'])
@@ -296,7 +296,7 @@ def market_sell(QUOTE_TOKEN, amount, slippage):
                           data=json.dumps({
                               "quoteResponse": quote,
                               "userPublicKey": str(KEY.pubkey()),
-                              "prioritizationFeeLamports": config.PRIORITY_FEE
+                              "prioritizationFeeLamports": PRIORITY_FEE
                           })).json()
     #print(txRes)
     swapTx = base64.b64decode(txRes['swapTransaction'])

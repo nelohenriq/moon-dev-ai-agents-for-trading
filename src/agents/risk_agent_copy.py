@@ -38,6 +38,7 @@ RESPECT_LIMIT: <detailed reason for each position>
 """
 
 import anthropic
+import openai
 import os
 import pandas as pd
 import json
@@ -63,7 +64,9 @@ class RiskAgent(BaseAgent):
         if not api_key:
             raise ValueError("🚨 ANTHROPIC_KEY not found in environment variables!")
             
-        self.client = anthropic.Anthropic(api_key=api_key)
+        self.client = openai.OpenAI(
+            base_url="http://localhost:11434/v1", api_key="ollama"
+        )
         self.override_active = False
         self.last_override_check = None
         
@@ -389,7 +392,7 @@ CLOSE_ALL or HOLD_POSITIONS
 Then explain your reasoning.
 """
             # Get AI decision
-            message = self.client.messages.create(
+            message = self.client.chat.completions.create(
                 model=AI_MODEL,
                 max_tokens=AI_MAX_TOKENS,
                 temperature=AI_TEMPERATURE,
@@ -399,7 +402,7 @@ Then explain your reasoning.
                 }]
             )
             
-            response = message.content
+            response = message.choices[0].message.content
             if isinstance(response, list):
                 response = '\n'.join([item.text if hasattr(item, 'text') else str(item) for item in response])
             

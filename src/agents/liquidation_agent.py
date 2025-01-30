@@ -75,7 +75,10 @@ Market Data (Last {LOOKBACK_BARS} {TIMEFRAME} candles):
 Large long liquidations often indicate potential bottoms (shorts taking profit)
 Large short liquidations often indicate potential tops (longs taking profit)
 Consider the ratio of long vs short liquidations and their relative changes
-**IMPORTANT**: Respond ONLY in the required 3-line format. Do not include any additional text or explanations.
+
+**IMPORTANT**: 
+Respond ONLY in the required 3-line format. 
+Do not include any additional text or explanations.
 """
 
 
@@ -94,6 +97,10 @@ class LiquidationAgent(BaseAgent):
         self.ai_max_tokens = (
             AI_MAX_TOKENS if AI_MAX_TOKENS > 0 else config.AI_MAX_TOKENS
         )
+
+        self.tts_engine = pyttsx3.init(driverName="espeak")
+        self.tts_engine.setProperty("rate", 150)
+        self.tts_engine.setProperty("volume", 1.0)
 
         print(f"🤖 Using AI Model: {self.ai_model}")
         if AI_MODEL or AI_TEMPERATURE > 0 or AI_MAX_TOKENS > 0:
@@ -131,13 +138,12 @@ class LiquidationAgent(BaseAgent):
         self.tts_engine.setProperty("volume", 1.0)  # Volume level (0.0 to 1.0)
 
         print("🌊 Luna the Liquidation Agent initialized!")
-<<<<<<< HEAD
         print(
             f"🎯 Alerting on liquidation increases above {(LIQUIDATION_THRESHOLD-1)*100:.0f}%"
         )
-=======
-        print(f"🎯 Alerting on liquidation increases above +{LIQUIDATION_THRESHOLD*100:.0f}% from previous")
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+        print(
+            f"🎯 Alerting on liquidation increases above +{LIQUIDATION_THRESHOLD*100:.0f}% from previous"
+        )
         print(f"📊 Analyzing last {LIQUIDATION_ROWS} liquidation events")
         print(f"📈 Using {LOOKBACK_BARS} {TIMEFRAME} candles for market context")
 
@@ -207,15 +213,12 @@ class LiquidationAgent(BaseAgent):
                 ]
 
                 # Convert timestamp to datetime (UTC)
-<<<<<<< HEAD
                 df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
                 current_time = datetime.utcnow()
 
-=======
-                df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-                current_time = datetime.datetime.now(datetime.UTC)
-                
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+                df["datetime"] = pd.to_datetime(df["timestamp"], unit="ms")
+                current_time = datetime.utcnow()
+
                 # Calculate time windows
                 fifteen_min = current_time - timedelta(minutes=15)
                 one_hour = current_time - timedelta(hours=1)
@@ -485,7 +488,10 @@ class LiquidationAgent(BaseAgent):
             response = self.client.chat.completions.create(
                 model=self.ai_model,
                 messages=[
-                    {"role": "system", "content": context},
+                    {
+                        "role": "system",
+                        "content": "You are a trading assistant. Always respond in exactly 3 lines: Line 1 must be BUY, SELL, or NOTHING. Line 2 must be a short reason. Line 3 must be Confidence: X% where X is 0-100.",
+                    },
                     {"role": "user", "content": context},
                 ],
                 temperature=self.ai_temperature,
@@ -553,19 +559,16 @@ class LiquidationAgent(BaseAgent):
                     pct_change = analysis["pct_change_longs"]
                 else:
                     liq_type = "SHORT"
-<<<<<<< HEAD
                     pct_change = analysis["pct_change_shorts"]
 
-=======
-                    pct_change = analysis['pct_change_shorts']
-                
+                    pct_change = analysis["pct_change_shorts"]
+
                 # Format the percentage change message
                 if pct_change > 0:
                     change_msg = f"up {abs(pct_change):.1f}%"
                 else:
                     change_msg = f"down {abs(pct_change):.1f}%"
-                
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+
                 message = (
                     f"ayo moon dev seven seven seven! "
                     f"Massive {liq_type} liquidations detected! "
@@ -632,6 +635,8 @@ class LiquidationAgent(BaseAgent):
             # Get current liquidation data
             current_longs, current_shorts = self._get_current_liquidations()
 
+            threshold = 1 + LIQUIDATION_THRESHOLD
+
             if current_longs is not None and current_shorts is not None:
                 # Get previous size
                 if not self.liquidation_history.empty:
@@ -644,16 +649,12 @@ class LiquidationAgent(BaseAgent):
                     # Only trigger if we have valid previous data
                     if previous_longs > 0 and previous_shorts > 0:
                         # Check if we have a significant increase in either longs or shorts
-<<<<<<< HEAD
                         if current_longs > (
                             previous_longs * LIQUIDATION_THRESHOLD
                         ) or current_shorts > (previous_shorts * LIQUIDATION_THRESHOLD):
-=======
-                        # Adding 1 to threshold so 0.5 means 150% of previous value
-                        threshold = 1 + LIQUIDATION_THRESHOLD
-                        if (current_longs > (previous_longs * threshold) or 
-                            current_shorts > (previous_shorts * threshold)):
->>>>>>> c3be79076105d42d3e63e937514eb36d7155f542
+                            # Adding 1 to threshold so 0.5 means 150% of previous value
+                            threshold = 1 + LIQUIDATION_THRESHOLD
+                        if current_longs > (previous_longs * threshold) or current_shorts > (previous_shorts * threshold):
                             # Get AI analysis
                             analysis = self._analyze_opportunity(
                                 current_longs,
@@ -671,7 +672,7 @@ class LiquidationAgent(BaseAgent):
                                     # Print detailed analysis
                                     print("\n" + "╔" + "═" * 50 + "╗")
                                     print(
-                                        "║        🌙 Moon Dev's Liquidation Analysis 💦       ║"
+                                        "║         🌙 Moon Dev's Liquidation Analysis 💦       ║"
                                     )
                                     print("╠" + "═" * 50 + "╣")
                                     print(f"║  Action: {analysis['action']:<41} ║")

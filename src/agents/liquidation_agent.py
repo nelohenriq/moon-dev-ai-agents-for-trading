@@ -213,7 +213,6 @@ class LiquidationAgent(BaseAgent):
                 # Convert timestamp to datetime (UTC)
                 df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
                 current_time = datetime.utcnow()
-                current_time = datetime.datetime.now(datetime.UTC)
                 
                 # Calculate time windows
                 fifteen_min = current_time - timedelta(minutes=15)
@@ -431,7 +430,7 @@ class LiquidationAgent(BaseAgent):
             
             # Get market data silently (BTC by default since it leads the market)
             market_data = hl.get_data(
-                symbol="BTC",
+                symbol="SOL",
                 timeframe=TIMEFRAME,
                 bars=LOOKBACK_BARS,
                 add_indicators=True
@@ -462,7 +461,7 @@ class LiquidationAgent(BaseAgent):
             print(f"\n🤖 Analyzing liquidation spike with AI...")
             
             # Get AI analysis using instance settings
-            message = self.client.messages.create(
+            ai_response = self.client.chat.completions.create(
                 model=self.ai_model,
                 max_tokens=self.ai_max_tokens,
                 temperature=self.ai_temperature,
@@ -473,12 +472,12 @@ class LiquidationAgent(BaseAgent):
             )
             
             # Handle response
-            if not message or not message.content:
+            if not ai_response or not ai_response.choices[0].message.content:
                 print("❌ No response from AI")
                 return None
                 
             # Handle TextBlock response
-            response = message.content
+            response = ai_response.choices[0].message.content
             if isinstance(response, list):
                 # If it's a list of TextBlocks, get the text from the first one
                 if len(response) > 0 and hasattr(response[0], 'text'):
@@ -652,9 +651,6 @@ class LiquidationAgent(BaseAgent):
                                     # Print detailed analysis
                                     print("\n" + "╔" + "═" * 50 + "╗")
                                     print("║        🌙 Moon Dev's Liquidation Analysis 💦        ║")
-                                    print(
-                                        "║         🌙 Moon Dev's Liquidation Analysis 💦       ║"
-                                    )
                                     print("╠" + "═" * 50 + "╣")
                                     print(f"║  Action: {analysis['action']:<41} ║")
                                     print(

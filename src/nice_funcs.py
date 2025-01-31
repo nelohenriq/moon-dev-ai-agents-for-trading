@@ -132,7 +132,6 @@ def market_buy(token, amount, slippage):
     if not KEY:
         raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
     # print('key success')
-    SLIPPAGE = slippage  # 5000 is 50%, 500 is 5% and 50 is .5%
 
     QUOTE_TOKEN = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # usdc
 
@@ -142,7 +141,7 @@ def market_buy(token, amount, slippage):
         raise ValueError("🚨 RPC_ENDPOINT not found in environment variables!")
 
     quote = requests.get(
-        f"https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}"
+        f"https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={slippage}"
     ).json()
     # print(quote)
 
@@ -172,8 +171,6 @@ def market_sell(QUOTE_TOKEN, amount, slippage):
     KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
     if not KEY:
         raise ValueError("🚨 SOLANA_PRIVATE_KEY not found in environment variables!")
-    # print('key success')
-    SLIPPAGE = slippage  # 5000 is 50%, 500 is 5% and 50 is .5%
 
     # token would be usdc for sell orders cause we are selling
     token = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # USDC
@@ -184,7 +181,7 @@ def market_sell(QUOTE_TOKEN, amount, slippage):
     print("http client success")
 
     quote = requests.get(
-        f"https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={SLIPPAGE}"
+        f"https://quote-api.jup.ag/v6/quote?inputMint={QUOTE_TOKEN}&outputMint={token}&amount={amount}&slippageBps={slippage}"
     ).json()
     # print(quote)
     txRes = requests.post(
@@ -372,6 +369,11 @@ def fetch_wallet_holdings_og(wallet_address):
     if balances.empty:
         return pd.DataFrame()
 
+    # Filter out Token Program address
+    balances = balances[
+        balances['Mint Address'] != 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA'
+    ]
+
     # Add USD value for each token
     balances["USD Value"] = balances.apply(
         lambda row: row["Balance"] * (token_price(row["Mint Address"]) or 0), 
@@ -437,21 +439,6 @@ def pnl_close(token_mint_address):
     elif usd_value < sl:
         print(f"📉 Stopping loss for {token_mint_address[:4]}...")
         market_sell(token_mint_address, balance, slippage)
-
-
-# Get position balance for a specific token
-def get_position(wallet_address, token_mint_address):
-    """Fetch the balance of a specific token for a wallet using RPC."""
-    balances = fetch_wallet_balances(wallet_address)
-    if balances.empty:
-        return 0
-
-    # Filter for the specific token
-    token_balance = balances[balances["Mint Address"] == token_mint_address]
-    if token_balance.empty:
-        return 0
-
-    return token_balance["Balance"].iloc[0]
 
 
 # Fetch token metadata using Solana RPC
@@ -638,19 +625,7 @@ def delete_dont_overtrade_file():
     else:
         print("The file does not exist")
 
-
-def get_time_range():
-    now = datetime.now()
-    ten_days_earlier = now - timedelta(days=10)
-    time_to = int(now.timestamp())
-    time_from = int(ten_days_earlier.timestamp())
-    # print(time_from, time_to)
-
-    return time_from, time_to
-
-
 import math
-
 
 def round_down(value, decimals):
     factor = 10**decimals

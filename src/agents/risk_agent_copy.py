@@ -79,21 +79,29 @@ class RiskAgent(BaseAgent):
         
     def get_portfolio_value(self):
         """Calculate total portfolio value in USD"""
-        total_value = 0.0
-        
         try:
-            # Get USDC balance first
-            usdc_value = n.get_token_balance_usd(config.USDC_ADDRESS)
-            total_value += usdc_value
+            # First check if wallet has any tokens
+            cprint("🔍 Checking wallet for tokens...", "white", "on_blue")
+            positions = n.fetch_wallet_holdings_og(address)
+
+            # Debug print to see what we're getting
+            print("Wallet positions:")
+            print(positions)
             
-            # Get balance of each monitored token
+            if positions.empty:
+                cprint("📝 Wallet has no tokens - skipping price checks", "white", "on_blue")
+                return 0.0
+                
+            # If we have tokens, then proceed with balance calculations
+            total_value = 0.0
             for token in config.MONITORED_TOKENS:
-                if token != config.USDC_ADDRESS:  # Skip USDC as we already counted it
+                if token in positions['Mint Address'].values:
                     token_value = n.get_token_balance_usd(token)
                     total_value += token_value
+                    time.sleep(3)
                     
             return total_value
-            
+                
         except Exception as e:
             cprint(f"❌ Error calculating portfolio value: {str(e)}", "white", "on_red")
             return 0.0
@@ -113,7 +121,7 @@ class RiskAgent(BaseAgent):
                     last_log = df['timestamp'].max()
                     hours_since_log = (datetime.now() - last_log).total_seconds() / 3600
                     
-                    if hours_since_log < config.MAX_LOSS_GAIN_CHECK_HOURS:
+                    if hours_since_log < MAX_LOSS_GAIN_CHECK_HOURS:
                         cprint(f"✨ Recent balance log found ({hours_since_log:.1f} hours ago)", "white", "on_blue")
                         return
             else:
@@ -202,9 +210,9 @@ class RiskAgent(BaseAgent):
             
             cprint("🤖 AI Agent analyzing market data...", "white", "on_green")
             message = self.client.messages.create(
-                model=config.AI_MODEL,
-                max_tokens=config.AI_MAX_TOKENS,
-                temperature=config.AI_TEMPERATURE,
+                model=AI_MODEL,
+                max_tokens=AI_MAX_TOKENS,
+                temperature=AI_TEMPERATURE,
                 messages=[{"role": "user", "content": prompt}]
             )
             

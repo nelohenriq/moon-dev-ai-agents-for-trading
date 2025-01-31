@@ -79,12 +79,13 @@ AI_ANALYSIS_FILE = Path("src/data/ai_analysis.csv")
 
 # 🤖 CoinGecko API Settings
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
+GROQ_API_KEY = os.getenv("OPENAI_KEY")
 COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 TEMP_DATA_DIR = Path("src/data/temp_data")
 
 # 🤖 Agent Model Selection
-AGENT_ONE_MODEL = "deepseek-r1:7b"     # Technical Analysis Agent
-AGENT_TWO_MODEL = "deepseek-r1:7b"    # Fundamental Analysis Agent
+AGENT_ONE_MODEL = "deepseek-r1-distill-llama-70b"     # Technical Analysis Agent
+AGENT_TWO_MODEL = "deepseek-r1-distill-llama-70b"    # Fundamental Analysis Agent
 
 # 🤖 Agent Prompts
 AGENT_ONE_PROMPT = """
@@ -138,8 +139,8 @@ class AIAgent:
         self.name = name
         self.model = model  # e.g., "llama2", "mistral"
         self.client = openai.OpenAI(
-            base_url="http://localhost:11434/v1",  # Ollama's OpenAI-compatible endpoint
-            api_key="ollama"  # API key is not required for Ollama
+            base_url="https://api.groq.com/openai/v1",  # Ollama's OpenAI-compatible endpoint
+            api_key=GROQ_API_KEY  # API key is not required for Ollama
         )
         self.memory_file = Path(f"src/data/agent_memory/{name.lower().replace(' ', '_')}.json")
         self.memory = {
@@ -183,15 +184,15 @@ class AIAgent:
         try:
             # Format token data for analysis
             token_info = f"""
-🪙 Token Information:
-• Name: {token_data['name']} ({token_data['symbol']})
-• Token ID: {token_data['token_id']}
-• Current Price: ${float(token_data.get('price', 0)):,.8f}
-• 24h Volume: ${float(token_data.get('volume_24h', 0)):,.2f}
-• Market Cap: ${float(token_data.get('market_cap', 0)):,.2f}
+            🪙 Token Information:
+            • Name: {token_data['name']} ({token_data['symbol']})
+            • Token ID: {token_data['token_id']}
+            • Current Price: ${float(token_data.get('price', 0)):,.8f}
+            • 24h Volume: ${float(token_data.get('volume_24h', 0)):,.2f}
+            • Market Cap: ${float(token_data.get('market_cap', 0)):,.2f}
 
-{token_data.get('ohlcv_data', '❌ No OHLCV data available')}
-"""
+            {token_data.get('ohlcv_data', '❌ No OHLCV data available')}
+            """
             
             # Build the prompt
             if self.name == "Agent One":
@@ -233,8 +234,8 @@ Remember to reference specific data points from the OHLCV table in your analysis
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.7,
-                max_tokens=300
+                temperature=0.0,
+                max_tokens=500
             )
             
             analysis = response.choices[0].message.content
@@ -273,6 +274,7 @@ class ListingArbSystem:
         self.agent_one = AIAgent("Agent One", AGENT_ONE_MODEL)
         self.agent_two = AIAgent("Agent Two", AGENT_TWO_MODEL)
         self.analysis_log = self._load_analysis_log()
+        self.rate_limiter = RateLimiter(max_requests=30, time_window=60)  # 30 requests per minute
         cprint("🔍 Moon Dev's Listing Arb System Ready!", "white", "on_green", attrs=["bold"])
         
     def _load_analysis_log(self) -> pd.DataFrame:
@@ -315,6 +317,9 @@ class ListingArbSystem:
                 return "❌ Token in ignore list"
             
             print(f"\n📈 Fetching OHLCV data for {token_id}...")
+
+            # Use rate limiter
+            self.rate_limiter.wait_if_needed()
             
             url = f"{COINGECKO_BASE_URL}/coins/{token_id}/ohlc"
             params = {
@@ -322,16 +327,16 @@ class ListingArbSystem:
                 'days': '14'           # Will give us 4h intervals based on docs
             }
             headers = {
-                'x-cg-pro-api-key': COINGECKO_API_KEY
+                'x-cg-demo-api-key': COINGECKO_API_KEY
             }
             
             response = requests.get(url, headers=headers, params=params)
             
             # Print raw response for debugging
-            print("\n🔍 Raw API Response:")
-            print(f"Status Code: {response.status_code}")
-            print(f"Response Headers: {dict(response.headers)}")
-            print(f"Response Data: {response.text[:500]}...")  # First 500 chars
+            # print("\n🔍 Raw API Response:")
+            # print(f"Status Code: {response.status_code}")
+            # print(f"Response Headers: {dict(response.headers)}")
+            # print(f"Response Data: {response.text[:500]}...")  # First 500 chars
             
             # Handle API errors gracefully
             if response.status_code != 200:
@@ -378,8 +383,8 @@ class ListingArbSystem:
                 """
                 
                 # Print formatted data for verification
-                print("\n📊 Formatted OHLCV Data:")
-                print(formatted_data)
+                # print("\n📊 Formatted OHLCV Data:")
+                # print(formatted_data)
                 print(stats)
                 
                 return formatted_data + stats
@@ -414,12 +419,15 @@ class ListingArbSystem:
                     tokens_to_analyze.append(token_data.to_dict())
             
             if tokens_to_analyze:
-                # Submit all tokens for analysis
-                futures = [executor.submit(self.analyze_token, token) for token in tokens_to_analyze]
-                # Wait for all to complete
-                concurrent.futures.wait(futures)
+                # Process one token at a time using ThreadPoolExecutor
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    for token in tokens_to_analyze:
+                        future = executor.submit(self.analyze_token, token)
+                        concurrent.futures.wait([future])  # Wait for this token to complete
+                        time.sleep(2)
             
             print(f"✅ Batch complete - Analyzed {len(tokens_to_analyze)} tokens")
+
 
     def analyze_token(self, token_data: Dict):
         """Have both agents analyze a token"""
@@ -542,6 +550,12 @@ class ListingArbSystem:
             # Load discovered tokens
             discovered_tokens_df = self.load_discovered_tokens()
             
+            # Ensure required columns exist
+            required_columns = ['token_id', 'symbol', 'name', 'price', 'volume_24h', 'market_cap']
+            for col in required_columns:
+                if col not in discovered_tokens_df.columns:
+                    discovered_tokens_df[col] = ''
+
             # Sort by volume for efficiency
             discovered_tokens_df = discovered_tokens_df.sort_values('volume_24h', ascending=False)
             
@@ -612,10 +626,7 @@ class ListingArbSystem:
         next_run = datetime.now() + timedelta(hours=HOURS_BETWEEN_RUNS)
         print(f"\n⏳ Next round starts in {HOURS_BETWEEN_RUNS} hours (at {next_run.strftime('%H:%M:%S')})")
 
-
-
 def main():
-    """Main function to run token discovery"""
     print("\n🌙 Moon Dev's Listing Arb System Starting Up! 🚀")
     print(f"📝 Results will be saved to: {AI_ANALYSIS_FILE.absolute()}")
     
@@ -626,14 +637,8 @@ def main():
             start_time = datetime.now()
             print(f"\n🔄 Starting new analysis round at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
             
-            # Load discovered tokens
-            tokens = system.load_discovered_tokens()
-            
-            # Filter and analyze tokens
-            filtered_tokens = system.filter_tokens(tokens)
-            
-            # Save results
-            system.save_analysis(filtered_tokens)
+            # Run the analysis cycle which handles loading, filtering and analyzing
+            system.run_analysis_cycle()
             
             # Calculate next run time
             next_run = start_time.timestamp() + (HOURS_BETWEEN_RUNS * 3600)

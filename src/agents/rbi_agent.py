@@ -269,7 +269,7 @@ def init_deepseek_client():
             api_key="ollama"
         ) """
 
-        groq_api_key = os.getenv('OPENAI_KEY')
+        groq_api_key = os.getenv('GROQ_API_KEY')
 
         client = openai.OpenAI(
             base_url=GROQ_BASE_URL,
@@ -402,27 +402,35 @@ def research_strategy(content):
         chat_with_deepseek,
         "Research Agent",
         RESEARCH_PROMPT, 
-        content, 
-        RESEARCH_MODEL
+        content,
+        RESEARCH_MODEL  # Pass research-specific model config
     )
     
     if output:
+        output = clean_escaped_characters(output)  # Clean entire output
         strategy_name = "UnknownStrategy"  # Default name
         if "STRATEGY_NAME:" in output:
             strategy_name = output.split("STRATEGY_NAME:")[1].split("\n")[0].strip()
-            # Clean up strategy name to be file-system friendly
-            strategy_name = re.sub(r'[^\w\s-]', '', strategy_name)
-            strategy_name = re.sub(r'[\s]+', '', strategy_name)
+            strategy_name = clean_escaped_characters(strategy_name)  # Clean strategy name
+            strategy_name = re.sub(r'[^\w\s-]', '', strategy_name)  # Remove non-alphanumeric, non-space, non-hyphen
+            strategy_name = strategy_name.replace(" ", "_")  # Replace spaces with underscores
+            strategy_name = strategy_name.encode('ascii', 'ignore').decode()  # Remove non-ASCII characters
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         # Save research output
         filepath = RESEARCH_DIR / f"{strategy_name}_strategy.txt"
-        with open(filepath, 'w') as f:
-            f.write(output)
-        cprint(f"📝 Research Agent found something spicy! Saved to {filepath} 🌶️", "green")
-        cprint(f"🏷️ Generated strategy name: {strategy_name}", "yellow")
-        return output, strategy_name
+        try:
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(output)
+            cprint(f"📝 Research Agent found something spicy! Saved to {filepath} 🌶️", "green")
+            cprint(f"🏷️ Generated strategy name: {strategy_name}", "yellow")
+            return output, strategy_name
+        except Exception as e:
+            cprint(f"❌ Error writing strategy file: {str(e)}", "red")
+            return None, None
     return None, None
+
+def clean_escaped_characters(text):
+    return re.sub(r'\\([_\w])', r'\1', text)
 
 @traceable
 def create_backtest(strategy, strategy_name="UnknownStrategy"):
@@ -440,7 +448,7 @@ def create_backtest(strategy, strategy_name="UnknownStrategy"):
     
     if output:
         filepath = BACKTEST_DIR / f"{strategy_name}_BT.py"
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write(output)
         cprint(f"🔥 Backtest Agent cooked up some heat! Saved to {filepath} 🚀", "green")
         return output
@@ -471,7 +479,7 @@ def debug_backtest(backtest_code, strategy=None, strategy_name="UnknownStrategy"
             
         # Save to final directory with strategy name
         filepath = FINAL_BACKTEST_DIR / f"{strategy_name}_BTFinal.py"
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write(output)
         cprint(f"🔧 Debug Agent fixed the code! Saved to {filepath} ✨", "green")
         return output
@@ -498,7 +506,7 @@ def package_check(backtest_code, strategy_name="UnknownStrategy"):
             
         # Save to package directory
         filepath = PACKAGE_DIR / f"{strategy_name}_PKG.py"
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write(output)
         cprint(f"📦 Package Agent optimized the imports! Saved to {filepath} ✨", "green")
         return output

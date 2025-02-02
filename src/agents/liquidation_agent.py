@@ -58,11 +58,13 @@ VOICE_SPEED = 1  # Not used in pyttsx3, but kept for compatibility
 
 # AI Analysis Prompt
 LIQUIDATION_ANALYSIS_PROMPT = """
-You are a precise trading assistant. Your response must follow this EXACT format:
+You are a precise trading assistant. Your response must follow this EXACT format without any extra text:
 
-LINE 1: Type ONLY one of these words: BUY, SELL, or NOTHING
-LINE 2: Brief reason (10 words or less)
-LINE 3: Type "Confidence: " followed by a number 0-100 and "%"
+1. Type ONLY one of these words: BUY, SELL, or NOTHING.
+2. Provide a brief reason (10 words or less).
+3. Type "Confidence: " followed by a number 0-100 and "%".
+
+Your response MUST contain exactly three lines, nothing more.
 
 Market Data:
 - Total Liquidation Change: {pct_change}%
@@ -73,10 +75,11 @@ Technical Context:
 {market_data}
 =======
 
-Large long liquidations often indicate potential bottoms (shorts taking profit)
-Large short liquidations often indicate potential tops (longs taking profit)
-Consider the ratio of long vs short liquidations and their relative changes
-**IMPORTANT**: Respond ONLY in the required 3-line format. Do not include any additional text or explanations.
+Large long liquidations often indicate potential bottoms (shorts taking profit).
+Large short liquidations often indicate potential tops (longs taking profit).
+Consider the ratio of long vs short liquidations and their relative changes.
+
+**IMPORTANT**: Do NOT include "LINE 1:", "LINE 2:", or "LINE 3:". Output only the required text on three lines.
 """
 
 

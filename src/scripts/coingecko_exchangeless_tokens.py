@@ -8,6 +8,7 @@ import os
 import requests
 import pandas as pd
 import json
+import yfinance as yf
 from typing import Dict, List, Optional
 from datetime import datetime
 import time
@@ -36,10 +37,6 @@ DO_NOT_ANALYZE = [
 # 📁 File Paths
 DISCOVERED_TOKENS_FILE = Path("src/data/discovered_tokens.csv")
 
-class CoinGeckoTokenFinder:
-    """Utility class for finding promising Solana tokens 🦎"""
-    
-    def __init__(self):
 COINGECKO_API_KEY = os.getenv("COINGECKO_API_KEY")
 
 # 📁 File Paths
@@ -75,7 +72,7 @@ SOLANA_TOKENS = [
     'scnSOL-USD', # Socean Staked SOL
 ]
 
-class TokenFinder:
+class CoinGeckoTokenFinder:
     """Utility class for finding promising Solana tokens 🦎"""
     
     def __init__(self):

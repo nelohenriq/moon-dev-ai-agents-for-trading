@@ -3,34 +3,29 @@
 Built with love by Moon Dev 🚀
 """
 
-from src.config import *
 import requests
 import pandas as pd
 import pprint
 import re as reggie
-import sys
 import os
 import time
 import json
+import shutil
+import atexit
+import json
+import base64
+import math
 import numpy as np
-import datetime
 import pandas_ta as ta
+from src.config import *
 from datetime import datetime, timedelta
 from termcolor import colored, cprint
 from dotenv import load_dotenv
-import shutil
-import atexit
 from solders.pubkey import Pubkey
 from solders.keypair import Keypair
 from solders.transaction import VersionedTransaction
 from solana.rpc.api import Client
-import sys
-import json
-import base64
-from solana.rpc.api import Client
 from solana.rpc.types import TxOpts, TokenAccountOpts
-from solana.rpc.types import TxOpts, TokenAccountOpts
-from solana.rpc.types import TxOpts
 
 # Load environment variables
 load_dotenv()
@@ -95,7 +90,7 @@ def token_security_info(address):
     """Get token security info using Helius"""
     payload = {
         "jsonrpc": "2.0",
-        "id": "my-id",
+        "id": "token-security-info",
         "method": "getTokenSecurity",
         "params": [address],
     }
@@ -113,7 +108,7 @@ def token_creation_info(address):
     """Get token creation info using Helius"""
     payload = {
         "jsonrpc": "2.0",
-        "id": "my-id",
+        "id": "token-creation-info",
         "method": "getTokenMint",
         "params": [address],
     }
@@ -126,7 +121,72 @@ def token_creation_info(address):
     else:
         print("Failed to retrieve token creation info:", response.status_code)
 
+def token_overview(address):
+    """
+    Fetch token overview for a given address and return structured information using RPC
+    """
+    print(f'Getting the token overview for {address}')
+    result = {}
 
+    try:
+        # Get token metadata
+        metadata = get_token_metadata_parsed(address)
+        result['decimals'] = metadata.get('decimals', 9)
+
+        # Get token security info
+        payload_security = {
+            "jsonrpc": "2.0",
+            "id": "token-security",
+            "method": "getTokenSecurity",
+            "params": [address],
+        }
+        security_response = requests.post(RPC_ENDPOINT, json=payload_security)
+        if security_response.status_code == 200:
+            security_data = security_response.json().get('result', {})
+            result['security'] = security_data
+
+        # Get token creation info
+        payload_creation = {
+            "jsonrpc": "2.0",
+            "id": "token-creation",
+            "method": "getTokenMint",
+            "params": [address],
+        }
+        creation_response = requests.post(RPC_ENDPOINT, json=payload_creation)
+        if creation_response.status_code == 200:
+            creation_data = creation_response.json().get('result', {})
+            result['creation'] = creation_data
+
+        # Get token supply info
+        pubkey = Pubkey.from_string(address)
+        supply_response = solana_client.get_token_supply(pubkey)
+        if supply_response:
+            result['total_supply'] = supply_response.value.amount
+            result['supply_decimals'] = supply_response.value.decimals
+
+        # Extract links from metadata if available
+        if 'creation' in result and 'metadata' in result['creation']:
+            description = result['creation'].get('metadata', {}).get('data', {}).get('description', '')
+            urls = find_urls(description)
+            
+            links = []
+            for url in urls:
+                if 't.me' in url:
+                    links.append({'telegram': url})
+                elif 'twitter.com' in url:
+                    links.append({'twitter': url})
+                elif 'youtube' not in url:
+                    links.append({'website': url})
+                    
+            result['links'] = links
+
+        return result
+
+    except Exception as e:
+        print(f"Error retrieving token overview for {address}: {str(e)}")
+        return None
+
+# Market Functions
 def market_buy(token, amount, slippage):
     KEY = Keypair.from_base58_string(os.getenv("SOLANA_PRIVATE_KEY"))
     if not KEY:
@@ -208,7 +268,6 @@ def market_sell(QUOTE_TOKEN, amount, slippage):
     print(f"https://solscan.io/tx/{str(txId)}")
 
 
-import math
 
 
 def round_down(value, decimals):
@@ -348,10 +407,11 @@ def fetch_wallet_balances(wallet_address):
                     mint_address = account_info["mint"]
                     balance = int(account_info["tokenAmount"]["amount"])
                     decimals = int(account_info["tokenAmount"]["decimals"])
-
-                balances.append(
-                    {"Mint Address": mint_address, "Balance": balance / (10**decimals)}
-                )
+                    
+                if mint_address != "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA":
+                    balances.append(
+                        {"Mint Address": mint_address, "Balance": balance / (10**decimals)}
+                    )
             except Exception as e:
                 print(f"🔍 Skipping account due to parsing: {str(e)[:100]}")
                 continue
@@ -442,14 +502,14 @@ def pnl_close(token_mint_address):
 
 
 # Fetch token metadata using Solana RPC
-def get_token_metadata(token_mint_address):
+def get_token_metadata_parsed(token_mint_address):
     """Fetch token metadata (e.g., decimals) using Solana RPC."""
     try:
         # Convert mint address to Pubkey
         pubkey = Pubkey.from_string(token_mint_address)
 
         # Fetch account info
-        response = solana_client.get_account_info(pubkey)
+        response = solana_client.get_account_info_json_parsed(pubkey)
         if not response.value:
             print(f"❌ No account info found for mint address: {token_mint_address}")
             return None

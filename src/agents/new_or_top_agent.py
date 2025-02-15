@@ -650,9 +650,9 @@ class NewOrTopAgent:
                         "name": coin_data.get("name", coin["name"]),
                         "symbol": coin_data.get("symbol", coin["symbol"]),
                         "source": "Top gainer",
-                        "price_usd": coin_data["market_data_df"]["price"].iloc[0],  # Use the market_data_df we created
-                        "volume_24h": coin_data["market_data_df"]["volume"].iloc[0],
-                        "price_change_24h": coin_data["market_data_df"]["change_24h"].iloc[0],
+                        "price_usd": float(coin_data["market_data_df"]["price"].iloc[0]) if "market_data_df" in coin_data else float(coin_data.get("market_data", {}).get("current_price", {}).get("usd", 0)),
+                        "volume_24h": float(coin_data["market_data_df"]["volume"].iloc[0]) if "market_data_df" in coin_data else float(coin_data.get("market_data", {}).get("total_volume", {}).get("usd", 0)),
+                        "price_change_24h": float(coin_data["market_data_df"]["change_24h"].iloc[0]) if "market_data_df" in coin_data else float(coin_data.get("market_data", {}).get("price_change_percentage_24h", 0)),
                         "recommendation": recommendation,
                         "coingecko_url": f"https://www.coingecko.com/en/coins/{coin_data.get('id', coin['id'])}"
                     }

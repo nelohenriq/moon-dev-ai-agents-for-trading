@@ -296,4 +296,7 @@ class StrategyAgent:
 if __name__ == "__main__":
     # Initialize the StrategyAgent
     agent = StrategyAgent()
-    agent.execute_strategy_signals()
+    tokens = ["XRP","SOL"]
+    for token in tokens:
+        signals = agent.get_signals(token)
+        agent.execute_strategy_signals(signals)

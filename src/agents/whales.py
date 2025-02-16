@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-TOKEN_ADDRESS = "95vyUqpkqx2GEnAaXbUZRBGmmfsmhTsh8AuF6UeHpump"
+TOKEN_ADDRESS = "9LeWL9THE145vMYd7qghQkJQWpBfBWxuUQqVUmAdLgGW"
 DEXSCREENER_API = os.getenv("DEXSCREENER_API")
 HELIUS_RPC_URL = os.getenv("HELIUS_RPC_URL")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -219,17 +219,23 @@ def get_token_creator(token_address):
         }
     }
     
-    response = requests.post(
-        HELIUS_RPC_URL,
-        headers={"Content-Type": "application/json"},
-        json=payload
-    ).json()
-    
-    if "result" in response:
-        authorities = response["result"].get("authorities", [])
-        if authorities:
-            return authorities[0].get("address")  # Return first authority address
-    
+    try:
+        response = requests.post(
+            HELIUS_RPC_URL,
+            headers={"Content-Type": "application/json"},
+            json=payload
+        ).json()
+
+        if "result" in response:
+            authorities = response["result"].get("authorities", [])
+            if authorities:
+                return authorities[0].get("address")  # Return first authority address
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error during request: {e}")
+        time.sleep(2)  # Simple retry delay on error
+        return get_token_creator(token_address)  # Retry the request
+        
     return None
 
 def get_creator_tokens(creator_address):
@@ -563,8 +569,11 @@ def main():
     print(f"💧 Liquidity: ${initial_data['liquidity']}")
     print(f"📊 Market Cap: ${initial_data['market_cap']}")
     print(f"📈 Total Supply: {initial_data['total_supply']}")
-    print(f"🔥 LP Burned: {initial_data['creator_tokens'][0]['lp_burned']}")
-    print(f"👥 Top 10 Holders: {initial_data['creator_tokens'][0]['top_10_holders_pct']:.2f}%")
+    if initial_data.get('creator_tokens'):
+        print(f"🔥 LP Burned: {initial_data['creator_tokens'][0]['lp_burned']}")
+        print(f"👥 Top 10 Holders: {initial_data['creator_tokens'][0]['top_10_holders_pct']:.2f}%")
+    else:
+        print("No tokens found for the creator.")
     print(f"🔗 DexScreener: {dex_url}")
 
     

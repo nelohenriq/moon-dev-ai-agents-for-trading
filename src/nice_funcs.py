@@ -45,21 +45,17 @@ COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 # Create temp directory and register cleanup
 os.makedirs("temp_data", exist_ok=True)
 
-
 def cleanup_temp_data():
     if os.path.exists("temp_data"):
         print("🧹 Moon Dev cleaning up temporary data...")
         shutil.rmtree("temp_data")
 
-
 atexit.register(cleanup_temp_data)
-
 
 # Custom function to print JSON in a human-readable format
 def print_pretty_json(data):
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(data)
-
 
 # Helper function to find URLs in text
 def find_urls(string):
@@ -68,7 +64,6 @@ def find_urls(string):
         r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
         string,
     )
-
 
 # Fetch token price using CoinGecko API
 def token_price(token_id):
@@ -84,7 +79,6 @@ def token_price(token_id):
             f"❌ Failed to fetch price for {token_id}. Status code: {response.status_code}"
         )
         return None
-
 
 def token_security_info(address):
     """Get token security info using Helius"""
@@ -102,7 +96,6 @@ def token_security_info(address):
         print_pretty_json(security_data)
     else:
         print("Failed to retrieve token security info:", response.status_code)
-
 
 def token_creation_info(address):
     """Get token creation info using Helius"""
@@ -132,6 +125,10 @@ def token_overview(address):
         # Get token metadata
         metadata = get_token_metadata_parsed(address)
         result['decimals'] = metadata.get('decimals', 9)
+        result["freezeAuthority"] = metadata.get("freezeAuthority"),
+        result["isInitialized"] = metadata.get("isInitialized"),
+        result["mintAuthority"] = metadata.get("mintAuthority"),
+        result["supply"] = metadata.get("supply")
 
         # Get token security info
         payload_security = {
@@ -516,7 +513,13 @@ def get_token_metadata_parsed(token_mint_address):
 
         # Parse metadata (decimals)
         metadata = response.value.data.parsed["info"]
-        return {"decimals": metadata.get("decimals", 0)}
+        return {
+            "decimals": metadata.get("decimals", 0),
+            "freezeAuthority": metadata.get("freezeAuthority"),
+            "isInitialized": metadata.get("isInitialized"),
+            "mintAuthority": metadata.get("mintAuthority"),
+            "supply": metadata.get("supply")
+        }
 
     except Exception as e:
         print(f"❌ Error fetching token metadata: {str(e)}")

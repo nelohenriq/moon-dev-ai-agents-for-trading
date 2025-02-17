@@ -11,11 +11,12 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-TOKEN_ADDRESS = "95vyUqpkqx2GEnAaXbUZRBGmmfsmhTsh8AuF6UeHpump"
+TOKEN_ADDRESS = "4MpXgiYj9nEvN1xZYZ4qgB6zq5r2JMRy54WaQu5fpump"
 DEXSCREENER_API = os.getenv("DEXSCREENER_API")
-HELIUS_RPC_URL = os.getenv("HELIUS_RPC_URL")
+RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+
 
 class MonitoringThreads:
     def __init__(self):
@@ -40,32 +41,34 @@ class MonitoringThreads:
         for thread in self.threads:
             thread.join()
 
+
 class MonitorConfig:
     def __init__(self):
         self.config = {
-            'price_change_threshold': 10,
-            'liquidity_change_threshold': 5,
-            'whale_threshold': 0.05,
-            'market_cap_change_threshold': 7,
-            'check_intervals': {
-                'price': 300,
-                'liquidity': 600,
-                'whales': 1800,
-                'transactions': 60,
-                'market_cap': 300
-            }
+            "price_change_threshold": 10,
+            "liquidity_change_threshold": 5,
+            "whale_threshold": 0.05,
+            "market_cap_change_threshold": 7,
+            "check_intervals": {
+                "price": 300,
+                "liquidity": 600,
+                "whales": 1800,
+                "transactions": 60,
+                "market_cap": 300,
+            },
         }
-    
+
     def update_config(self, new_config):
         self.config.update(new_config)
+
 
 class HealthCheck:
     def __init__(self):
         self.last_updates = {}
-        
+
     def update(self, monitor_name):
         self.last_updates[monitor_name] = datetime.now()
-        
+
     def check_health(self, max_delay_minutes=10):
         now = datetime.now()
         unhealthy = []
@@ -74,6 +77,7 @@ class HealthCheck:
                 unhealthy.append(monitor)
         return unhealthy
 
+
 def format_number(number, decimals=2):
     """Format numbers for readability in alerts"""
     if number >= 1_000_000:
@@ -81,6 +85,7 @@ def format_number(number, decimals=2):
     elif number >= 1_000:
         return f"${number/1_000:.{decimals}f}K"
     return f"${number:.{decimals}f}"
+
 
 def make_api_request(url, payload, max_retries=3, initial_delay=1):
     """Make API requests with exponential backoff"""
@@ -92,40 +97,43 @@ def make_api_request(url, payload, max_retries=3, initial_delay=1):
         except requests.exceptions.RequestException as e:
             if attempt == max_retries - 1:
                 raise
-            delay = initial_delay * (2 ** attempt)
+            delay = initial_delay * (2**attempt)
             time.sleep(delay)
+
 
 def setup_logging():
     """Configure logging system"""
     logging.basicConfig(
         level=logging.INFO,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler('whale_monitor.log'),
-            logging.StreamHandler()
-        ]
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        handlers=[logging.FileHandler("whale_monitor.log"), logging.StreamHandler()],
     )
+
 
 def cleanup_wallet_history(wallet_history, max_age_hours=24):
     """Remove old wallet history entries"""
     cutoff_time = datetime.now() - timedelta(hours=max_age_hours)
     return {
-        wallet: data for wallet, data in wallet_history.items()
-        if data['last_seen'] > cutoff_time
+        wallet: data
+        for wallet, data in wallet_history.items()
+        if data["last_seen"] > cutoff_time
     }
 
-def save_monitoring_state(data, filename='monitor_state.json'):
+
+def save_monitoring_state(data, filename="monitor_state.json"):
     """Save monitoring state to file"""
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         json.dump(data, f)
 
-def load_monitoring_state(filename='monitor_state.json'):
+
+def load_monitoring_state(filename="monitor_state.json"):
     """Load monitoring state from file"""
     try:
-        with open(filename, 'r') as f:
+        with open(filename, "r") as f:
             return json.load(f)
     except FileNotFoundError:
         return None
+
 
 def validate_solana_address(address):
     """Validate Solana address format"""
@@ -134,6 +142,7 @@ def validate_solana_address(address):
         return len(decoded) == 32
     except:
         return False
+
 
 # Fetch initial data
 def fetch_initial_data():
@@ -151,7 +160,7 @@ def fetch_initial_data():
     }
 
     supply_response = requests.post(
-        HELIUS_RPC_URL,
+        RPC_ENDPOINT,
         headers={"Content-Type": "application/json"},
         json=helius_payload,
     ).json()
@@ -173,6 +182,7 @@ def fetch_initial_data():
         "creator": creator,
         "creator_tokens": creator_tokens,
     }
+
 
 def check_lp_burn(lp_address):
     """Check if LP tokens are burned"""
@@ -198,7 +208,7 @@ def check_lp_burn(lp_address):
     }
 
     holders = requests.post(
-        HELIUS_RPC_URL,
+        RPC_ENDPOINT,
         headers={"Content-Type": "application/json"},
         json=holders_payload,
     ).json()
@@ -208,33 +218,31 @@ def check_lp_burn(lp_address):
         for h in holders["result"]
     )
 
+
 def get_token_creator(token_address):
     """Get token creator using Helius getAsset"""
     payload = {
         "jsonrpc": "2.0",
         "id": "token-info",
         "method": "getAsset",
-        "params": {
-            "id": token_address
-        }
+        "params": {"id": token_address},
     }
-    
+
     response = requests.post(
-        HELIUS_RPC_URL,
-        headers={"Content-Type": "application/json"},
-        json=payload
+        RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=payload
     ).json()
-    
+
     if "result" in response:
         authorities = response["result"].get("authorities", [])
         if authorities:
             return authorities[0].get("address")  # Return first authority address
-    
+
     return None
+
 
 def get_creator_tokens(creator_address):
     """Get all tokens created by address that are listed on Raydium with extended metrics"""
-    
+
     search_payload = {
         "jsonrpc": "2.0",
         "id": "creator-tokens",
@@ -244,17 +252,12 @@ def get_creator_tokens(creator_address):
             "tokenType": "fungible",
             "page": 1,
             "limit": 100,
-            "options": {
-                "showNativeBalance": True,
-                "showCollectionMetadata": True
-            }
-        }
+            "options": {"showNativeBalance": True, "showCollectionMetadata": True},
+        },
     }
 
     tokens_response = requests.post(
-        HELIUS_RPC_URL,
-        headers={"Content-Type": "application/json"},
-        json=search_payload
+        RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=search_payload
     ).json()
 
     raydium_tokens = []
@@ -271,7 +274,7 @@ def get_creator_tokens(creator_address):
         }
 
         token_info = requests.post(
-            HELIUS_RPC_URL,
+            RPC_ENDPOINT,
             headers={"Content-Type": "application/json"},
             json=token_info_payload,
         ).json()
@@ -298,7 +301,7 @@ def get_creator_tokens(creator_address):
         }
 
         holders = requests.post(
-            HELIUS_RPC_URL,
+            RPC_ENDPOINT,
             headers={"Content-Type": "application/json"},
             json=holders_payload,
         ).json()
@@ -339,9 +342,13 @@ def get_creator_tokens(creator_address):
                     {
                         "address": token_address,
                         "name": dex_data["pairs"][0].get("baseToken", {}).get("name"),
-                        "symbol": dex_data["pairs"][0].get("baseToken", {}).get("symbol"),
+                        "symbol": dex_data["pairs"][0]
+                        .get("baseToken", {})
+                        .get("symbol"),
                         "price": dex_data["pairs"][0].get("priceUsd"),
-                        "liquidity": dex_data["pairs"][0].get("liquidity", {}).get("usd"),
+                        "liquidity": dex_data["pairs"][0]
+                        .get("liquidity", {})
+                        .get("usd"),
                         "volume_24h": dex_data["pairs"][0].get("volume", {}).get("h24"),
                         "freeze_authority": freeze_authority,
                         "lp_burned": lp_burned,
@@ -351,6 +358,7 @@ def get_creator_tokens(creator_address):
 
     return raydium_tokens
 
+
 # Send Telegram alert
 def send_alert(message):
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
@@ -358,6 +366,7 @@ def send_alert(message):
     requests.get(url, params=params)
 
     print(message)
+
 
 def monitor_creator_tokens(creator_address, config):
     dex_url = f"https://dexscreener.com/solana/{TOKEN_ADDRESS}"
@@ -367,7 +376,9 @@ def monitor_creator_tokens(creator_address, config):
         print(f"\n🔍 Found {len(creator_tokens)} tokens by creator on Raydium:")
         if not creator_tokens:
             print("💫 No tokens found for this creator yet. Continuing to monitor...")
-            send_alert("Creator has no tokens listed on Raydium yet. Will notify when new tokens are detected.")
+            send_alert(
+                "Creator has no tokens listed on Raydium yet. Will notify when new tokens are detected."
+            )
         else:
             for token in creator_tokens:
                 message = (
@@ -383,7 +394,8 @@ def monitor_creator_tokens(creator_address, config):
                 print(message)
                 send_alert(message)
 
-        time.sleep(config.config['check_intervals']['whales'])
+        time.sleep(config.config["check_intervals"]["whales"])
+
 
 # Monitor price changes
 def monitor_price(initial_price, config):
@@ -393,14 +405,15 @@ def monitor_price(initial_price, config):
         current_price = float(dex_data["pairs"][0]["priceUsd"])
         price_change = abs((current_price - initial_price) / initial_price) * 100
 
-        if price_change > config.config['price_change_threshold']:
+        if price_change > config.config["price_change_threshold"]:
             send_alert(
                 f"🚨 Price Alert: {price_change:.2f}% change! "
                 f"Current price: ${current_price}"
                 f"DexScreener: {dex_url}"
-                )
+            )
 
-        time.sleep(config.config['check_intervals']['price'])
+        time.sleep(config.config["check_intervals"]["price"])
+
 
 # Monitor liquidity changes
 def monitor_liquidity(initial_liquidity, config):
@@ -408,15 +421,19 @@ def monitor_liquidity(initial_liquidity, config):
     while True:
         dex_data = requests.get(f"{DEXSCREENER_API}/{TOKEN_ADDRESS}").json()
         current_liquidity = float(dex_data["pairs"][0]["liquidity"]["usd"])
-        liquidity_change = abs((current_liquidity - initial_liquidity) / initial_liquidity) * 100
+        liquidity_change = (
+            abs((current_liquidity - initial_liquidity) / initial_liquidity) * 100
+        )
 
-        if liquidity_change > config.config['liquidity_change_threshold']:
+        if liquidity_change > config.config["liquidity_change_threshold"]:
             send_alert(
                 f"🚨 Liquidity Alert: {liquidity_change:.2f}% change!"
                 f"Current liquidity: ${current_liquidity}"
-                f"DexScreener: {dex_url}")
+                f"DexScreener: {dex_url}"
+            )
 
-        time.sleep(config.config['check_intervals']['liquidity'])
+        time.sleep(config.config["check_intervals"]["liquidity"])
+
 
 # Monitor whale activity
 def monitor_whales(total_supply, config):
@@ -438,25 +455,30 @@ def monitor_whales(total_supply, config):
         }
 
         holders_response = requests.post(
-            HELIUS_RPC_URL,
+            RPC_ENDPOINT,
             headers={"Content-Type": "application/json"},
             json=holders_payload,
         ).json()
 
         for holder in holders_response["result"]:
-            balance = float(holder["account"]["data"]["parsed"]["info"]["tokenAmount"]["amount"])
+            balance = float(
+                holder["account"]["data"]["parsed"]["info"]["tokenAmount"]["amount"]
+            )
             holder_address = holder["account"]["data"]["parsed"]["info"]["owner"]
 
-            if balance > config.config['whale_threshold'] * total_supply:
-                send_alert(f"🐋 Whale Alert: {holder_address} holds {balance / total_supply * 100:.2f}% of supply!")
+            if balance > config.config["whale_threshold"] * total_supply:
+                send_alert(
+                    f"🐋 Whale Alert: {holder_address} holds {balance / total_supply * 100:.2f}% of supply!"
+                )
 
-        time.sleep(config.config['check_intervals']['whales'])
+        time.sleep(config.config["check_intervals"]["whales"])
+
 
 # Monitor suspicious transactions
 def monitor_transactions(total_supply, config):
     wallet_history = {}
     dex_url = f"https://dexscreener.com/solana/{TOKEN_ADDRESS}"
-    
+
     while True:
         try:
             tx_payload = {
@@ -467,7 +489,7 @@ def monitor_transactions(total_supply, config):
             }
 
             tx_response = requests.post(
-                HELIUS_RPC_URL,
+                RPC_ENDPOINT,
                 headers={"Content-Type": "application/json"},
                 json=tx_payload,
             ).json()
@@ -478,17 +500,25 @@ def monitor_transactions(total_supply, config):
                         "jsonrpc": "2.0",
                         "id": "tx-detail",
                         "method": "getTransaction",
-                        "params": [tx["signature"], {"encoding": "jsonParsed", "maxSupportedTransactionVersion": 0}],
+                        "params": [
+                            tx["signature"],
+                            {
+                                "encoding": "jsonParsed",
+                                "maxSupportedTransactionVersion": 0,
+                            },
+                        ],
                     }
 
                     tx_detail = requests.post(
-                        HELIUS_RPC_URL,
+                        RPC_ENDPOINT,
                         headers={"Content-Type": "application/json"},
                         json=tx_detail_payload,
                     ).json()
 
                     if "result" in tx_detail and tx_detail["result"]:
-                        for account in tx_detail["result"]["transaction"]["message"]["accountKeys"]:
+                        for account in tx_detail["result"]["transaction"]["message"][
+                            "accountKeys"
+                        ]:
                             wallet = account["pubkey"]
                             if wallet not in wallet_history:
                                 wallet_history[wallet] = {
@@ -501,16 +531,29 @@ def monitor_transactions(total_supply, config):
                                 wallet_history[wallet]["last_seen"] = datetime.now()
                                 wallet_history[wallet]["transaction_count"] += 1
 
-                            wallet_history[wallet]["transactions"].append({
-                                "timestamp": datetime.now(),
-                                "signature": tx["signature"],
-                                "type": "transfer",
-                            })
+                            wallet_history[wallet]["transactions"].append(
+                                {
+                                    "timestamp": datetime.now(),
+                                    "signature": tx["signature"],
+                                    "type": "transfer",
+                                }
+                            )
 
-                            post_balances = tx_detail["result"].get("meta", {}).get("postTokenBalances", [])
+                            post_balances = (
+                                tx_detail["result"]
+                                .get("meta", {})
+                                .get("postTokenBalances", [])
+                            )
                             if post_balances:
-                                amount = float(post_balances[0].get("uiTokenAmount", {}).get("amount", 0))
-                                if amount > config.config['whale_threshold'] * total_supply:
+                                amount = float(
+                                    post_balances[0]
+                                    .get("uiTokenAmount", {})
+                                    .get("amount", 0)
+                                )
+                                if (
+                                    amount
+                                    > config.config["whale_threshold"] * total_supply
+                                ):
                                     alert_message = (
                                         f"🚨 Large Transaction:\n"
                                         f"Wallet: {wallet}\n"
@@ -523,7 +566,8 @@ def monitor_transactions(total_supply, config):
         except Exception as e:
             logging.error(f"Transaction monitoring error: {str(e)}")
 
-        time.sleep(config.config['check_intervals']['transactions'])
+        time.sleep(config.config["check_intervals"]["transactions"])
+
 
 def monitor_market_cap(initial_price, total_supply, config):
     while True:
@@ -532,9 +576,11 @@ def monitor_market_cap(initial_price, total_supply, config):
 
         initial_market_cap = initial_price * total_supply
         current_market_cap = current_price * total_supply
-        market_cap_change = abs((current_market_cap - initial_market_cap) / initial_market_cap) * 100
+        market_cap_change = (
+            abs((current_market_cap - initial_market_cap) / initial_market_cap) * 100
+        )
 
-        if market_cap_change > config.config['market_cap_change_threshold']:
+        if market_cap_change > config.config["market_cap_change_threshold"]:
             send_alert(
                 f"📊 Market Cap Alert:\n"
                 f"Change: {market_cap_change:.2f}%\n"
@@ -542,39 +588,55 @@ def monitor_market_cap(initial_price, total_supply, config):
                 f"Current Price: ${current_price:,.6f}"
             )
 
-        time.sleep(config.config['check_intervals']['market_cap'])
+        time.sleep(config.config["check_intervals"]["market_cap"])
+
 
 # Main function
 def main():
     setup_logging()
     logging.info("Starting whale monitoring system")
-    
+
     config = MonitorConfig()
     health_check = HealthCheck()
     monitor_threads = MonitoringThreads()
-    
+
     initial_data = fetch_initial_data()
 
     dex_url = f"https://dexscreener.com/solana/{TOKEN_ADDRESS}"
-    
+
     print("\n🔎 Initial Token Analysis:")
     print(f"🪙 Token: {TOKEN_ADDRESS}")
     print(f"💰 Current Price: ${initial_data['price']}")
     print(f"💧 Liquidity: ${initial_data['liquidity']}")
     print(f"📊 Market Cap: ${initial_data['market_cap']}")
     print(f"📈 Total Supply: {initial_data['total_supply']}")
-    print(f"🔥 LP Burned: {initial_data['creator_tokens'][0]['lp_burned']}")
-    print(f"👥 Top 10 Holders: {initial_data['creator_tokens'][0]['top_10_holders_pct']:.2f}%")
+    if initial_data["creator_tokens"]:
+        print(f"👤 Creator: {initial_data['creator_tokens'][0]['creator']}")
+        print(
+            f"💰 Creator Tokens: {initial_data['creator_tokens'][0]['creator_tokens']}"
+        )
+        print(f"🔥 LP Burned: {initial_data['creator_tokens'][0]['lp_burned']}")
+        print(
+            f"👥 Top 10 Holders: {initial_data['creator_tokens'][0]['top_10_holders_pct']:.2f}%"
+        )
+    else:
+        print(f"No tokens found for creator {initial_data['creator']}")
     print(f"🔗 DexScreener: {dex_url}")
 
-    
     monitor_threads.add_thread(monitor_price, (initial_data["price"], config))
     monitor_threads.add_thread(monitor_liquidity, (initial_data["liquidity"], config))
     monitor_threads.add_thread(monitor_whales, (initial_data["total_supply"], config))
-    monitor_threads.add_thread(monitor_transactions, (initial_data["total_supply"], config))
-    monitor_threads.add_thread(monitor_market_cap, (initial_data["price"], initial_data["total_supply"], config))
-    monitor_threads.add_thread(monitor_creator_tokens, (initial_data["creator"], config))
-    
+    monitor_threads.add_thread(
+        monitor_transactions, (initial_data["total_supply"], config)
+    )
+    monitor_threads.add_thread(
+        monitor_market_cap,
+        (initial_data["price"], initial_data["total_supply"], config),
+    )
+    monitor_threads.add_thread(
+        monitor_creator_tokens, (initial_data["creator"], config)
+    )
+
     try:
         while True:
             unhealthy = health_check.check_health()
@@ -584,6 +646,7 @@ def main():
     except KeyboardInterrupt:
         logging.info("Shutting down monitoring system")
         monitor_threads.shutdown()
+
 
 if __name__ == "__main__":
     main()

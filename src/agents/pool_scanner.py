@@ -1,12 +1,15 @@
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
 import pandas as pd
 import os
 
-DEXSCREENER_API = os.getenv("DEXSCREENER_API")
+load_dotenv()
+
+DEXSCREENER_API = "https://api.dexscreener.com"
 
 def discover_raydium_pools():
-    dex_data = requests.get(f"{DEXSCREENER_API}/pairs").json()
+    dex_data = requests.get(f"{DEXSCREENER_API}/latest/dex/tokens/KFTSxPQxDV1wGjEvzKHWD7mG6e9TsMVq4eF4mQppump").json()
     raydium_pools = []
     
     for pair in dex_data["pairs"]:
@@ -25,3 +28,5 @@ def discover_raydium_pools():
     df.to_csv("src/data/raydium_pools.csv", index=False)
     
     return raydium_pools
+
+discover_raydium_pools()

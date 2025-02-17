@@ -14,7 +14,11 @@ import time
 
 # Load environment variables
 load_dotenv()
+
 RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
+
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # Configuration
 MIN_TRADE_VOLUME = 5  # Minimum SOL volume per trade
@@ -27,7 +31,7 @@ def get_recent_transactions():
         "id": "get_txs",
         "method": "getSignaturesForAddress",
         "params": [
-            "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc",  # Raydium
+            "4k3DyjvWmYP3kRpn6f6CzW6b8A6bnkqB4P5XtTr4oi6B",  # Raydium
             {"limit": 1000}
         ]
     }
@@ -106,6 +110,13 @@ def process_transactions(transactions):
     
     return whales_data
 
+def send_alert(message):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    params = {"chat_id": TELEGRAM_CHAT_ID, "text": message}
+    requests.get(url, params=params)
+
+    print(message)
+
 def discover_whales():
     whales_data = []
     known_whales = set()  # Track already discovered whales
@@ -127,10 +138,22 @@ def discover_whales():
             whales_df.sort_values('total_volume_sol', ascending=False, inplace=True)
             whales_df.to_csv(OUTPUT_FILE, index=False)
             
-            cprint(f"🐋 Found {len(new_whales)} new whale wallets!", "green")
+            cprint(f"🐋 Found {len(new_whales)} new whale wallet!", "green")
             cprint(f"📊 Total tracked whales: {len(whales_data)}", "blue")
             cprint(f"💰 Top whale volume: {whales_df['total_volume_sol'].max():.2f} SOL", "yellow")
         
+            # Send alert for new whales
+            for whale in new_whales:
+                message = (f"🐋 New Whale Found!\n"
+                           f"Wallet Address: {whale['wallet_address']}\n"
+                           f"Total Volume: {whale['total_volume_sol']:.2f} SOL\n"
+                           f"Trade Count: {whale['trade_count']}\n"
+                           f"Average Trade Size: {whale['avg_trade_size']:.2f} SOL\n"
+                           f"First Seen: {whale['first_seen']}\n"
+                           f"Last Seen: {whale['last_seen']}\n"
+                           f"Last Token: {whale['last_token']}")
+                send_alert(message)  # Send the alert to Telegram
+
         cprint("🔍 Monitoring for new whale activity...", "cyan")
         time.sleep(15)  # Wait 15 seconds before next check
 if __name__ == "__main__":

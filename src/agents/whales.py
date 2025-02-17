@@ -11,7 +11,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
+<<<<<<< HEAD
 TOKEN_ADDRESS = "4MpXgiYj9nEvN1xZYZ4qgB6zq5r2JMRy54WaQu5fpump"
+=======
+TOKEN_ADDRESS = "9LeWL9THE145vMYd7qghQkJQWpBfBWxuUQqVUmAdLgGW"
+>>>>>>> 06b5c483e3b9168132c4d9a1afbdd23ec92db8dc
 DEXSCREENER_API = os.getenv("DEXSCREENER_API")
 RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -227,6 +231,7 @@ def get_token_creator(token_address):
         "method": "getAsset",
         "params": {"id": token_address},
     }
+<<<<<<< HEAD
 
     response = requests.post(
         RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=payload
@@ -237,6 +242,26 @@ def get_token_creator(token_address):
         if authorities:
             return authorities[0].get("address")  # Return first authority address
 
+=======
+    
+    try:
+        response = requests.post(
+            HELIUS_RPC_URL,
+            headers={"Content-Type": "application/json"},
+            json=payload
+        ).json()
+
+        if "result" in response:
+            authorities = response["result"].get("authorities", [])
+            if authorities:
+                return authorities[0].get("address")  # Return first authority address
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error during request: {e}")
+        time.sleep(2)  # Simple retry delay on error
+        return get_token_creator(token_address)  # Retry the request
+        
+>>>>>>> 06b5c483e3b9168132c4d9a1afbdd23ec92db8dc
     return None
 
 
@@ -610,6 +635,7 @@ def main():
     print(f"💧 Liquidity: ${initial_data['liquidity']}")
     print(f"📊 Market Cap: ${initial_data['market_cap']}")
     print(f"📈 Total Supply: {initial_data['total_supply']}")
+<<<<<<< HEAD
     if initial_data["creator_tokens"]:
         print(f"👤 Creator: {initial_data['creator_tokens'][0]['creator']}")
         print(
@@ -621,6 +647,13 @@ def main():
         )
     else:
         print(f"No tokens found for creator {initial_data['creator']}")
+=======
+    if initial_data.get('creator_tokens'):
+        print(f"🔥 LP Burned: {initial_data['creator_tokens'][0]['lp_burned']}")
+        print(f"👥 Top 10 Holders: {initial_data['creator_tokens'][0]['top_10_holders_pct']:.2f}%")
+    else:
+        print("No tokens found for the creator.")
+>>>>>>> 06b5c483e3b9168132c4d9a1afbdd23ec92db8dc
     print(f"🔗 DexScreener: {dex_url}")
 
     monitor_threads.add_thread(monitor_price, (initial_data["price"], config))

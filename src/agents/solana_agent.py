@@ -14,6 +14,7 @@ from rich.console import Console
 from rich import print as rprint
 from dotenv import load_dotenv
 from termcolor import colored
+from src.agents.streamlit.config import *
 import random
 from src.nice_funcs import token_security_info, token_creation_info, token_price
 
@@ -30,50 +31,6 @@ logging.getLogger().setLevel(logging.CRITICAL)
 
 # Initialize Rich console
 console = Console()
-
-# Analysis Constants
-CHECK_INTERVAL = 600  # 5 minutes between each analysis run
-MIN_MARKET_CAP = 1000  # Minimum market cap in USD
-MAX_MARKET_CAP = 1000000  # Maximum market cap in USD (10M)
-MIN_LIQUIDITY = 1000  # Minimum liquidity in USD
-MAX_LIQUIDITY = 500000  # Maximum liquidity in USD (500k)
-MIN_VOLUME_24H = 5000  # Minimum 24h volume
-MAX_TOP_HOLDERS_PCT = 60  # Maximum percentage held by top 10 holders
-MIN_UNIQUE_HOLDERS = 100  # Minimum number of unique holders
-MIN_AGE_HOURS = 1  # Minimum token age in hours
-MAX_AGE_HOURS = 48  # Maximum token age in hours
-MIN_BUY_TX_PCT = 60  # Minimum percentage of buy transactions
-MIN_TRADES_LAST_HOUR = 10  # Minimum number of trades in last hour
-
-# Display Constants
-AUTO_OPEN_BROWSER = True  # Set to True to automatically open new tokens in browser
-USE_DEXSCREENER = True  # Set to True to use DexScreener instead of Birdeye
-
-BACKGROUND_COLORS = [
-    "on_blue",
-    "on_magenta",
-    "on_cyan",
-    "on_green",
-    "on_yellow",  # Removed white for better readability
-]
-
-ANALYSIS_EMOJIS = [
-    "🔍",
-    "📊",
-    "📈",
-    "🎯",
-    "💎",  # Analysis & targets
-    "🚀",
-    "⭐",
-    "🌟",
-    "✨",
-    "💫",  # Moon Dev specials
-    "🎨",
-    "🎭",
-    "🎪",
-    "🎢",
-    "🎡",  # Fun stuff
-]
 
 # Data paths
 DATA_FOLDER = Path(__file__).parent.parent / "data"
@@ -98,7 +55,10 @@ class SolanaAnalyzer:
 
     def token_overview(self, address):
         """
-        Fetch token overview using Helius RPC for metadata and DEX Screener for market data.
+        Fetch token overview using Helius RPC for metadata and security info,
+        Dex Screener for market data, and Helius's getTokenLargestAccounts for
+        holder distribution. Calculates the top 10 holders percentage based on
+        the already-retrieved total supply.
         """
         print(f"Getting the token overview for {address}")
         result = {}
@@ -112,7 +72,6 @@ class SolanaAnalyzer:
                 "params": [address, {"encoding": "jsonParsed"}],
             }
             metadata_response = requests.post(RPC_ENDPOINT, json=payload_metadata)
-
             if metadata_response.status_code == 200:
                 metadata = (
                     metadata_response.json()
@@ -122,17 +81,12 @@ class SolanaAnalyzer:
                     .get("parsed", {})
                 )
                 if metadata:
-                    result["decimals"] = metadata.get("info", {}).get("decimals", 9)
-                    result["freezeAuthority"] = metadata.get("info", {}).get(
-                        "freezeAuthority"
-                    )
-                    result["isInitialized"] = metadata.get("info", {}).get(
-                        "isInitialized"
-                    )
-                    result["mintAuthority"] = metadata.get("info", {}).get(
-                        "mintAuthority"
-                    )
-                    result["supply"] = int(metadata.get("info", {}).get("supply", 0))
+                    info = metadata.get("info", {})
+                    result["decimals"] = info.get("decimals", 9)
+                    result["freezeAuthority"] = info.get("freezeAuthority")
+                    result["isInitialized"] = info.get("isInitialized")
+                    result["mintAuthority"] = info.get("mintAuthority")
+                    result["supply"] = int(info.get("supply", 0))
 
             # 2️⃣ Get token security info using `getAsset`
             payload_security = {
@@ -146,13 +100,11 @@ class SolanaAnalyzer:
                 security_data = security_response.json().get("result", {})
                 result["security"] = security_data
 
-            # 3️⃣ Get market data from DEX Screener
+            # 3️⃣ Get market data from Dex Screener
             dex_screener_url = (
                 f"https://api.dexscreener.com/latest/dex/tokens/{address}"
             )
             dex_response = requests.get(dex_screener_url)
-
-            # Check if DEX Screener returned valid data
             if dex_response.status_code != 200:
                 print(
                     f"❌ Failed to fetch DEX Screener data for {address}. Skipping token."
@@ -160,15 +112,12 @@ class SolanaAnalyzer:
                 return None
 
             dex_data = dex_response.json().get("pairs", None)
-
-            # If no trading pairs exist, the token is dead → SKIP
             if not dex_data:
                 print(
                     f"❌ No trading data on DEX Screener for {address}. Token is likely dead. Skipping."
                 )
                 return None
 
-            # Extract top market data
             top_market = dex_data[0]
             result["liquidity"] = float(top_market.get("liquidity", {}).get("usd", 0))
             result["mc"] = float(top_market.get("fdv", 0))
@@ -183,6 +132,30 @@ class SolanaAnalyzer:
                 * 100
             )
 
+            # 4️⃣ Get token holder distribution using Helius's getTokenLargestAccounts
+            # and calculate top 10 holders percentage using the already-retrieved total supply.
+            payload_largest = {
+                "jsonrpc": "2.0",
+                "id": "getTokenLargestAccounts",
+                "method": "getTokenLargestAccounts",
+                "params": [address],
+            }
+            largest_response = requests.post(RPC_ENDPOINT, json=payload_largest)
+            if largest_response.status_code == 200:
+                largest_data = largest_response.json().get("result", {})
+                largest_accounts = largest_data.get("value", [])
+                # Sum amounts for top 10 holders (if available)
+                top_10_amount = sum(
+                    float(acc.get("amount", 0)) for acc in largest_accounts[:10]
+                )
+                total_supply = result.get("supply", 0)
+                if total_supply > 0:
+                    result["top_holder_pct"] = (top_10_amount / total_supply) * 100
+                else:
+                    result["top_holder_pct"] = None
+            else:
+                result["top_holder_pct"] = None
+
             return result
 
         except Exception as e:
@@ -195,7 +168,6 @@ class SolanaAnalyzer:
             print(f"\n🔍 Fetching overview for {token_address}")
 
             # Initialize variables
-            top_holders_pct = 100  # Default if we can't get the data
             reasons = []  # Track rejection reasons
 
             # Get token overview data
@@ -206,11 +178,11 @@ class SolanaAnalyzer:
                 print(f"⚠️ Skipping {token_address}: No valid token overview data.")
                 return None
 
-            # ✅ Extract security info from overview
+            # ✅ Extract security info from overview (if needed)
             security_info = overview.get("security", {})
 
-            # Extract relevant security metrics
-            top_holders_pct = security_info.get("top10HolderPercent", 1) * 100
+            # Use the top holder percentage computed from token_overview
+            top_holders_pct = overview.get("top_holder_pct", 100)
             liquidity_locked = security_info.get("liquidityLocked", False)
             mint_authority = security_info.get("mintAuthority", None)
             freeze_authority = security_info.get("freezeAuthority", None)

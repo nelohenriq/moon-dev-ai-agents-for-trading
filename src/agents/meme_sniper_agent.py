@@ -584,7 +584,6 @@ def save_analyzed_tokens_to_csv(tokens, file_path):
         return
 
     # Debugging: Print tokens before writing
-    print(f"📝 Tokens being saved: {tokens}")
     print(f"📁 Saving to: {file_path.resolve()}")
 
     # Check if file exists

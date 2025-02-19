@@ -252,10 +252,17 @@ class TxScanner:
 
     def monitor_transactions(self):
         """Monitor for new transactions silently"""
+        rprint(
+            "[bold green]✅ TxScanner is running... Watching for new transactions![/bold green]"
+        )
+
         while True:
             try:
                 df = self.get_recent_transactions()
                 if df is None or df.empty:
+                    rprint(
+                        "[yellow]⚠ No new transactions found. Checking again...[/yellow]"
+                    )
                     time.sleep(CHECK_INTERVAL)
                     continue
 

@@ -25,6 +25,7 @@ import logging
 from rich.console import Console
 from rich import print as rprint
 from playsound import playsound
+from src.agents.streamlit.config import *
 
 # Suppress INFO logs
 logging.getLogger().setLevel(logging.WARNING)
@@ -33,7 +34,7 @@ logging.getLogger().setLevel(logging.WARNING)
 console = Console()
 
 # Constants
-PAST_TOKENS_TO_SHOW = 20  # Number of past token launches to display
+PAST_TOKENS_TO_SHOW = 30  # Number of past token launches to display
 CHECK_INTERVAL = 10  # Seconds between each check for new launches
 DISPLAY_DELAY = 0.5  # Seconds between displaying each token
 ANIMATION_DURATION = 10  # Seconds to show attention-grabbing animation
@@ -47,109 +48,6 @@ SOUND_ENABLED = True  # Set to True to enable sound effects, False to disable th
 DATA_FOLDER = (
     Path(__file__).parent.parent / "data" / "sniper_agent"
 )  # Folder for token data
-
-# Animation sequences
-ATTENTION_EMOJIS = [
-    "🚨",
-    "💫",
-    "⚡",
-    "🔥",
-    "✨",
-    "💥",  # Attention-grabbing
-    "🎯",
-    "🎪",
-    "🎢",
-    "🎡",
-    "🎠",  # Fun & festive
-    "🌈",
-    "🦄",
-    "🌟",
-    "💎",
-    "🚀",  # Moon Dev specials
-]
-
-# Background colors for token announcements
-BACKGROUND_COLORS = [
-    "on_blue",
-    "on_magenta",
-    "on_cyan",
-    "on_red",
-    "on_green",
-    "on_yellow",
-    "on_grey",
-    "on_white",
-]
-
-LAUNCH_EMOJIS = [
-    "🚀",
-    "💎",
-    "🌙",
-    "⭐",
-    "🔥",
-    "💫",
-    "✨",
-    "🌟",
-    "💰",
-    "🎯",  # Classic crypto
-    "🎆",
-    "🌠",
-    "⚡",
-    "🌈",
-    "🎨",
-    "🎪",
-    "🎭",
-    "🎡",
-    "🎢",
-    "🎠",  # Fun & festive
-    "🦁",
-    "🐉",
-    "🦊",
-    "🦄",
-    "🐋",
-    "🦈",
-    "🦅",
-    "🦚",
-    "🦜",
-    "🦋",  # Cool animals
-    "🏆",
-    "🎮",
-    "🎲",
-    "🎱",
-    "🎳",
-    "🎪",
-    "🎨",
-    "🎭",
-    "🎪",
-    "🎢",  # Games & fun
-    "🌍",
-    "🌎",
-    "🌏",
-    "🌕",
-    "🌖",
-    "🌗",
-    "🌘",
-    "🌑",
-    "🌒",
-    "🌓",  # Space & moon phases
-    "💥",
-    "🌪️",
-    "⚡",
-    "☄️",
-    "🌠",
-    "🎇",
-    "🎆",
-    "✨",
-    "💫",
-    "⭐",  # Energy & explosions
-]
-
-# Sound effects paths
-SOUND_EFFECTS = [
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/pownew.MP3",
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/Shining.wav",
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/final_fant1.MP3",
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/final_fant2.MP3",
-]
 
 
 class TokenScanner:

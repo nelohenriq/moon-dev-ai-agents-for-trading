@@ -56,7 +56,6 @@ def get_token_holders(token_address):
 
 # Fetch all token accounts by wallet
 def get_token_accounts_by_owner(wallet_address, token_mint_address):
-    headers = {'Content-Type': 'application/json'}
     payload = {
         "jsonrpc": "2.0",
         "id": 1,
@@ -104,9 +103,9 @@ def track_wallets():
                 continue
             
             # Fetch mints held by the wallet
-            mint_addresses = get_token_accounts_by_owner(address)
+            mint_addresses = get_token_accounts_by_owner(address, "T5Hy2dMwCKhJLQ7rPpBNSCdP3UbuBTVRefYMC7h6iFC")
             
-            for mint in mint_addresses:
+            for mint in mint_addresses if mint_addresses else []:
                 wallet_data.append([address, mint, amount])
                 save_analyzed_transaction(address, mint)
     

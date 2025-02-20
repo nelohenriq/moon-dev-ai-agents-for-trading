@@ -17,7 +17,7 @@ EXCLUDE_PATTERNS = [
 ]  # Exclude the SOLE token pattern
 BASE_URL = "http://api.moondev.com:8000"
 SOUND_ENABLED = True  # Set to True to enable sound effects, False to disable them
-DATA_FOLDER = Path(__file__).parent.parent / "data" / "sniper_agent"
+DATA_FOLDER = Path(__file__).parent.parent.parent / "data" / "sniper_agent"
 
 # Emojis and Background Colors
 ATTENTION_EMOJIS = ["🚨", "💫", "⚡", "🔥", "✨", "💥", "🌈", "🦄", "🌟", "💎", "🚀"]

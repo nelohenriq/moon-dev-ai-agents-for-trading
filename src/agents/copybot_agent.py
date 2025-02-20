@@ -21,9 +21,7 @@ from src import nice_funcs as n
 from src.data.ohlcv_collector import collect_token_data
 
 # Data path for current copybot portfolio
-COPYBOT_PORTFOLIO_PATH = (
-    "/teamspace/studios/this_studio/moondev/src/data/current_portfolio.csv"
-)
+COPYBOT_PORTFOLIO_PATH = "src/data/current_portfolio.csv"
 
 # LLM Prompts
 PORTFOLIO_ANALYSIS_PROMPT = """
@@ -70,8 +68,8 @@ class CopyBotAgent:
         """Initialize the CopyBot agent with LLM"""
         load_dotenv()
         self.client = openai.OpenAI(
-            base_url="http://localhost:11434/v1", 
-            api_key="ollama"
+            base_url="https://api.groq.com/openai/v1",
+            api_key="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",
         )
         self.recommendations_df = pd.DataFrame(
             columns=["token", "action", "confidence", "reasoning"]
@@ -145,7 +143,7 @@ class CopyBotAgent:
 
             # Get LLM analysis
             message = self.client.chat.completions.create(
-                model=AI_MODEL,
+                model="llama-3.2-3b-preview",
                 max_tokens=AI_MAX_TOKENS,
                 temperature=AI_TEMPERATURE,
                 messages=[{"role": "user", "content": full_prompt}],

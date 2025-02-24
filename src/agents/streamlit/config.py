@@ -138,8 +138,6 @@ ANALYSIS_EMOJIS = [
 ]
 
 SOUND_EFFECTS = [
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/pownew.MP3",
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/Shining.wav",
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/final_fant1.MP3",
-    "/Users/md/Dropbox/dev/github/Untitled/sounds/final_fant2.MP3",
+    "src/audio/notification.mp3",
+    "src/audio/ui-positive-selection-ni-sound-1-00-03.mp3",
 ]

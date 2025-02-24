@@ -81,7 +81,7 @@ data/
 
 # add this to gitignor /Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data
 src/data
-src/audio
+# src/audio
 # 🌙 Moon Dev's .gitignore
 # Keep your secrets safe! 🔒
 
@@ -169,7 +169,7 @@ src/data/ai_analysis.csv
 src/frontend
 # add this to gitignor /Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data
 
-src/audio
+# src/audio
 /Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/agent_memory
 /Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/sentiment
 /Users/md/Dropbox/dev/github/moon-dev-ai-agents-for-trading/src/data/focus_history.csv

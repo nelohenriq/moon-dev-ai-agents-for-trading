@@ -162,6 +162,6 @@ ANALYSIS_EMOJIS = [
 ]
 
 SOUND_EFFECTS = [
-    "src/audio/notification.mp3",
-    "src/audio/ui-positive-selection-ni-sound-1-00-03.mp3",
+    "moondev/src/audio/notification.mp3",
+    "moondev/src/audio/ui-positive-selection-ni-sound-1-00-03.mp3",
 ]

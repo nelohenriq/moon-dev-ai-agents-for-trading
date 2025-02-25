@@ -183,13 +183,13 @@ class SolanaAnalyzer:
 
             # Use the top holder percentage computed from token_overview
             top_holders_pct = overview.get("top_holder_pct", 100)
-            liquidity_locked = security_info.get("liquidityLocked", False)
+            #liquidity_locked = security_info.get("liquidityLocked", False)
             mint_authority = security_info.get("mintAuthority", None)
             freeze_authority = security_info.get("freezeAuthority", None)
 
             print(f"\n🔒 Security Info for {token_address[:8]}:")
             print(f"👥 Top 10 Holders: {top_holders_pct:.1f}%")
-            print(f"🔒 Liquidity Locked: {liquidity_locked}")
+            #print(f"🔒 Liquidity Locked: {liquidity_locked}")
             print(f"🛠️ Mint Authority: {mint_authority}")
             print(f"❄️ Freeze Authority: {freeze_authority}")
 
@@ -197,13 +197,13 @@ class SolanaAnalyzer:
             if top_holders_pct > MAX_TOP_HOLDERS_PCT:
                 reasons.append(f"High holder concentration ({top_holders_pct:.1f}%)")
 
-            if not liquidity_locked:
-                reasons.append("Liquidity is not locked")
+            """ if not liquidity_locked:
+                reasons.append("Liquidity is not locked") """
 
-            if mint_authority:
+            if mint_authority is not None:
                 reasons.append("Mint authority still exists")
 
-            if freeze_authority:
+            if freeze_authority is not None:
                 reasons.append("Freeze authority is enabled")
 
             # ✅ Market and Volume Checks
@@ -256,7 +256,6 @@ class SolanaAnalyzer:
                 "trades_1h": trades_1h,
                 "buy_percentage": buy_percentage,
                 "top_holders_pct": top_holders_pct,
-                "liquidity_locked": liquidity_locked,
                 "mint_authority": mint_authority,
                 "freeze_authority": freeze_authority,
             }

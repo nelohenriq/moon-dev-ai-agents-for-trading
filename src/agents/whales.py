@@ -11,17 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-TOKEN_ADDRESSES = [
-    "AQYJisLcMjF8Z8L8g86b1cBE8fSjPUpgTsukkLBRPX6N",
-    "FDayCFhBz3jgzgRWxae1kGMzd5cEbGd2Dof75MXepump",
-    "CJ1hvvoeygo8xJr4dCvpQ45LoCAmav5YjYBghnc3moon",
-    "6NiwT4d9nitohDmZN8YBpN59mKK7qZXspUYzWKWwPkuD",
-    "F1bDh1J9Qe7u5eUqZLHfWojGKHZK7dKcBVDvF4rBWarf",
-    "J2cXV9aZkhNXD5iNMZXjQeKbdMHrfgYdbhUZrAbHdhem",
-    "99QxHg4TcEJyCtXcK82rHwcnSdcQXg23d8dRp1KpWngM",
-    "2aoZTcWvDZKeyufWkYbJ9mYaoSD1P9HPKzEcZ79GZHbx",
-    ]
-TOKEN_ADDRESS = "2aoZTcWvDZKeyufWkYbJ9mYaoSD1P9HPKzEcZ79GZHbx"
+TOKEN_ADDRESS = "EduXDgsTfkNDVCdwJcqgfpnuzMx4m6BRk9NUmgK8Y9z1"
 DEXSCREENER_API = os.getenv("DEXSCREENER_API")
 RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -423,7 +413,7 @@ def monitor_creator_tokens(creator_address, config):
                     f"🔒 Freeze Authority: {token['freeze_authority'] or 'None'}\n"
                     f"🔥 LP Burned: {token['lp_burned']}\n"
                     f"👥 Top 10 Holders: {token['top_10_holders_pct']:.2f}%"
-                    f"🔗 DexScreener :{dex_url}"
+                    f"🔗 DexScreener: {dex_url}"
                 )
                 print(message)
                 send_alert(message)

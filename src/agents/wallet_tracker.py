@@ -162,9 +162,6 @@ def get_wallet_transactions(wallet_address):
 
     return transactions
 
-
-
-
 def calculate_roi(transaction):
     """
     Calculates the ROI from a transaction.

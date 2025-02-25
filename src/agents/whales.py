@@ -11,7 +11,17 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-TOKEN_ADDRESS = "9LeWL9THE145vMYd7qghQkJQWpBfBWxuUQqVUmAdLgGW"
+TOKEN_ADDRESSES = [
+    "AQYJisLcMjF8Z8L8g86b1cBE8fSjPUpgTsukkLBRPX6N",
+    "FDayCFhBz3jgzgRWxae1kGMzd5cEbGd2Dof75MXepump",
+    "CJ1hvvoeygo8xJr4dCvpQ45LoCAmav5YjYBghnc3moon",
+    "6NiwT4d9nitohDmZN8YBpN59mKK7qZXspUYzWKWwPkuD",
+    "F1bDh1J9Qe7u5eUqZLHfWojGKHZK7dKcBVDvF4rBWarf",
+    "J2cXV9aZkhNXD5iNMZXjQeKbdMHrfgYdbhUZrAbHdhem",
+    "99QxHg4TcEJyCtXcK82rHwcnSdcQXg23d8dRp1KpWngM",
+    "2aoZTcWvDZKeyufWkYbJ9mYaoSD1P9HPKzEcZ79GZHbx",
+    ]
+TOKEN_ADDRESS = "2aoZTcWvDZKeyufWkYbJ9mYaoSD1P9HPKzEcZ79GZHbx"
 DEXSCREENER_API = os.getenv("DEXSCREENER_API")
 RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -44,18 +54,17 @@ class MonitoringThreads:
 
 class MonitorConfig:
     def __init__(self):
-        self.config = {
-            "price_change_threshold": 10,
-            "liquidity_change_threshold": 5,
-            "whale_threshold": 0.05,
-            "market_cap_change_threshold": 7,
-            "check_intervals": {
-                "price": 300,
-                "liquidity": 600,
-                "whales": 1800,
-                "transactions": 60,
-                "market_cap": 300,
-            },
+        # Storing the configuration values directly as instance variables
+        self.price_change_threshold = 10
+        self.liquidity_change_threshold = 5
+        self.whale_threshold = 0.05
+        self.market_cap_change_threshold = 7
+        self.check_intervals = {
+            "price": 300,
+            "liquidity": 600,
+            "whales": 1800,
+            "transactions": 60,
+            "market_cap": 300,
         }
 
     def update_config(self, new_config):
@@ -152,20 +161,20 @@ def fetch_initial_data():
     liquidity = float(dex_data["pairs"][0]["liquidity"]["usd"])
 
     # Get token metadata using Helius RPC
-    helius_payload = {
+    supply_payload = {
         "jsonrpc": "2.0",
         "id": "my-id",
         "method": "getTokenSupply",
         "params": [TOKEN_ADDRESS],
     }
 
-    supply_response = requests.post(
+    supply = requests.post(
         RPC_ENDPOINT,
         headers={"Content-Type": "application/json"},
-        json=helius_payload,
+        json=supply_payload,
     ).json()
 
-    total_supply = float(supply_response["result"]["value"]["amount"])
+    total_supply = float(supply["result"]["value"]["amount"])
 
     creator_tokens = None
     creator = get_token_creator(TOKEN_ADDRESS)
@@ -191,7 +200,7 @@ def check_lp_burn(lp_address):
         "deadbeef111111111111111111111111111111111",
     ]
 
-    holders_payload = {
+    program_accounts_payload = {
         "jsonrpc": "2.0",
         "id": "lp-holders",
         "method": "getProgramAccounts",
@@ -207,21 +216,27 @@ def check_lp_burn(lp_address):
         ],
     }
 
-    holders = requests.post(
+    program_accounts = requests.post(
         RPC_ENDPOINT,
         headers={"Content-Type": "application/json"},
-        json=holders_payload,
+        json=program_accounts_payload,
     ).json()
 
-    return any(
-        h["account"]["data"]["parsed"]["info"]["owner"] in burn_addresses
-        for h in holders["result"]
-    )
+    if "result" in program_accounts:
+        return any(
+            h["account"]["data"]["parsed"]["info"]["owner"] in burn_addresses
+            for h in program_accounts["result"]
+        )
+    else:
+        # Log the error if result is missing
+        logging.error(f"Error in response: {program_accounts}")
+        return False
 
 
 def get_token_creator(token_address):
     """Get token creator using Helius getAsset"""
-    payload = {
+
+    creator_payload = {
         "jsonrpc": "2.0",
         "id": "token-info",
         "method": "getAsset",
@@ -229,12 +244,12 @@ def get_token_creator(token_address):
     }
 
     try:
-        response = requests.post(
-            RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=payload
+        creator_response = requests.post(
+            RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=creator_payload
         ).json()
 
-        if "result" in response:
-            authorities = response["result"].get("authorities", [])
+        if "result" in creator_response:
+            authorities = creator_response["result"].get("authorities", [])
             if authorities:
                 return authorities[0].get("address")  # Return first authority address
 
@@ -246,29 +261,28 @@ def get_token_creator(token_address):
     return None
 
 
-def get_creator_tokens(creator_address):
+def get_creator_tokens(authority_address):
     """Get all tokens created by address that are listed on Raydium with extended metrics"""
 
-    search_payload = {
+    tokens_payload = {
         "jsonrpc": "2.0",
-        "id": "creator-tokens",
-        "method": "searchAssets",
+        "id": "authority-tokens",
+        "method": "getAssetsByAuthority",
         "params": {
-            "authorityAddress": creator_address,
-            "tokenType": "fungible",
+            "authorityAddress": authority_address,
             "page": 1,
             "limit": 100,
-            "options": {"showNativeBalance": True, "showCollectionMetadata": True},
+            "sortBy": {"sortBy": "created", "sortDirection": "asc"},
         },
     }
 
-    tokens_response = requests.post(
-        RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=search_payload
+    tokens = requests.post(
+        RPC_ENDPOINT, headers={"Content-Type": "application/json"}, json=tokens_payload
     ).json()
 
     raydium_tokens = []
-    if "result" in tokens_response and "items" in tokens_response["result"]:
-        for item in tokens_response["result"]["items"]:
+    if "result" in tokens and "items" in tokens["result"]:
+        for item in tokens["result"]["items"]:
             token_address = item["id"]
 
         # Get token metadata including freeze authority
@@ -364,6 +378,20 @@ def get_creator_tokens(creator_address):
 
     return raydium_tokens
 
+def check_if_program(address):
+    """Check if an address is a Solana program (executable) or a wallet."""
+    payload = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "getAccountInfo",
+        "params": [address, {"encoding": "jsonParsed"}],
+    }
+    response = requests.post(RPC_ENDPOINT, json=payload).json()
+    value = response.get("result", {}).get("value")
+    if value is None:
+        # Could not retrieve account info; assume not a program
+        return False
+    return value.get("executable", False)
 
 # Send Telegram alert
 def send_alert(message):
@@ -400,7 +428,7 @@ def monitor_creator_tokens(creator_address, config):
                 print(message)
                 send_alert(message)
 
-        time.sleep(config.config["check_intervals"]["whales"])
+        time.sleep(config.check_intervals["whales"])
 
 
 # Monitor price changes
@@ -411,34 +439,63 @@ def monitor_price(initial_price, config):
         current_price = float(dex_data["pairs"][0]["priceUsd"])
         price_change = abs((current_price - initial_price) / initial_price) * 100
 
-        if price_change > config.config["price_change_threshold"]:
+        if price_change > config.price_change_threshold:
             send_alert(
                 f"🚨 Price Alert: {price_change:.2f}% change! "
                 f"Current price: ${current_price}"
                 f"DexScreener: {dex_url}"
             )
 
-        time.sleep(config.config["check_intervals"]["price"])
+        time.sleep(config.check_intervals["price"])
 
 
 # Monitor liquidity changes
-def monitor_liquidity(initial_liquidity, config):
-    dex_url = f"https://dexscreener.com/solana/{TOKEN_ADDRESS}"
+def monitor_liquidity(token_address, config):
+    """
+    Monitors liquidity changes and alerts on significant changes.
+    """
+    previous_liquidity = None
+    dex_url = f"https://dexscreener.com/solana/{token_address}"
+
     while True:
-        dex_data = requests.get(f"{DEXSCREENER_API}/{TOKEN_ADDRESS}").json()
-        current_liquidity = float(dex_data["pairs"][0]["liquidity"]["usd"])
-        liquidity_change = (
-            abs((current_liquidity - initial_liquidity) / initial_liquidity) * 100
-        )
+        try:
+            # Fetch token details (assumes an API providing this)
+            response = requests.get(f"https://api.dexscreener.com/latest/dex/tokens/{token_address}")
+            data = response.json()
 
-        if liquidity_change > config.config["liquidity_change_threshold"]:
-            send_alert(
-                f"🚨 Liquidity Alert: {liquidity_change:.2f}% change!"
-                f"Current liquidity: ${current_liquidity}"
-                f"DexScreener: {dex_url}"
-            )
+            if "pairs" not in data or not data["pairs"]:
+                logging.warning(f"No liquidity data found for token {token_address}. Retrying...")
+                time.sleep(config.check_intervals["liquidity"])
+                continue
 
-        time.sleep(config.config["check_intervals"]["liquidity"])
+            # Extract liquidity value (in USD)
+            liquidity_data = data["pairs"][0]
+            liquidity = liquidity_data.get("liquidity", {}).get("usd", 0)
+
+            # Check for liquidity changes only if we have a previous value
+            if previous_liquidity is not None:
+                liquidity_change = ((liquidity - previous_liquidity) / previous_liquidity) * 100
+                if abs(liquidity_change) >= config.liquidity_change_threshold:
+                    alert_message = (
+                        f"📉 Liquidity Change Alert:\n"
+                        f"Token: {token_address}\n"
+                        f"New Liquidity: ${liquidity:,.2f}\n"
+                        f"Change: {liquidity_change:.2f}%\n"
+                        f"DexScreener: {dex_url}"
+                    )
+                    send_alert(alert_message)
+
+            # Update previous liquidity for the next iteration
+            previous_liquidity = liquidity
+
+        except requests.RequestException as e:
+            logging.error(f"API Request error in monitor_liquidity: {str(e)}")
+        except KeyError as e:
+            logging.error(f"Unexpected data format in monitor_liquidity: Missing key {str(e)}")
+        except ZeroDivisionError:
+            logging.error("ZeroDivisionError in liquidity calculation. Skipping iteration.")
+
+        time.sleep(config.check_intervals["liquidity"])
 
 
 # Monitor whale activity
@@ -472,15 +529,13 @@ def monitor_whales(total_supply, config):
             )
             holder_address = holder["account"]["data"]["parsed"]["info"]["owner"]
 
-            if balance > config.config["whale_threshold"] * total_supply:
+            if balance > config.whale_threshold * total_supply:
                 send_alert(
                     f"🐋 Whale Alert: {holder_address} holds {balance / total_supply * 100:.2f}% of supply!"
                 )
 
-        time.sleep(config.config["check_intervals"]["whales"])
+        time.sleep(config.check_intervals["whales"])
 
-
-# Monitor suspicious transactions
 def monitor_transactions(total_supply, config):
     wallet_history = {}
     dex_url = f"https://dexscreener.com/solana/{TOKEN_ADDRESS}"
@@ -500,7 +555,7 @@ def monitor_transactions(total_supply, config):
                 json=tx_payload,
             ).json()
 
-            if tx_response["result"]:
+            if tx_response.get("result"):
                 for tx in tx_response["result"]:
                     tx_detail_payload = {
                         "jsonrpc": "2.0",
@@ -522,57 +577,57 @@ def monitor_transactions(total_supply, config):
                     ).json()
 
                     if "result" in tx_detail and tx_detail["result"]:
-                        for account in tx_detail["result"]["transaction"]["message"][
-                            "accountKeys"
-                        ]:
+                        accounts = tx_detail["result"]["transaction"]["message"]["accountKeys"]
+                        for account in accounts:
                             wallet = account["pubkey"]
-                            if wallet not in wallet_history:
-                                wallet_history[wallet] = {
-                                    "first_seen": datetime.now(),
-                                    "last_seen": datetime.now(),
-                                    "transaction_count": 1,
-                                    "transactions": [],
-                                }
-                            else:
-                                wallet_history[wallet]["last_seen"] = datetime.now()
-                                wallet_history[wallet]["transaction_count"] += 1
+                            is_program = check_if_program(wallet)  # Check if program or wallet
 
-                            wallet_history[wallet]["transactions"].append(
-                                {
-                                    "timestamp": datetime.now(),
-                                    "signature": tx["signature"],
-                                    "type": "transfer",
-                                }
-                            )
+                            if not is_program:  # Only track wallets
+                                if wallet not in wallet_history:
+                                    wallet_history[wallet] = {
+                                        "first_seen": datetime.now(),
+                                        "last_seen": datetime.now(),
+                                        "transaction_count": 1,
+                                        "transactions": [],
+                                    }
+                                else:
+                                    wallet_history[wallet]["last_seen"] = datetime.now()
+                                    wallet_history[wallet]["transaction_count"] += 1
 
-                            post_balances = (
-                                tx_detail["result"]
-                                .get("meta", {})
-                                .get("postTokenBalances", [])
-                            )
-                            if post_balances:
-                                amount = float(
-                                    post_balances[0]
-                                    .get("uiTokenAmount", {})
-                                    .get("amount", 0)
+                                wallet_history[wallet]["transactions"].append(
+                                    {
+                                        "timestamp": datetime.now(),
+                                        "signature": tx["signature"],
+                                        "type": "transfer",
+                                    }
                                 )
-                                if (
-                                    amount
-                                    > config.config["whale_threshold"] * total_supply
-                                ):
-                                    alert_message = (
-                                        f"🚨 Large Transaction:\n"
-                                        f"Wallet: {wallet}\n"
-                                        f"Amount: {amount}\n"
-                                        f"History: {wallet_history[wallet]['transaction_count']} transactions\n"
-                                        f"DexScreener: {dex_url}"
+
+                                post_balances = (
+                                    tx_detail["result"].get("meta", {}).get("postTokenBalances", [])
+                                )
+                                if post_balances:
+                                    amount = float(
+                                        post_balances[0].get("uiTokenAmount", {}).get("amount", 0)
                                     )
-                                    send_alert(alert_message)
+                                    if amount > config.whale_threshold * total_supply:
+                                        alert_message = (
+                                            f"🚨 Large Transaction:\n"
+                                            f"Wallet: {wallet}\n"
+                                            f"Amount: {amount}\n"
+                                            f"History: {wallet_history[wallet]['transaction_count']} transactions\n"
+                                            f"DexScreener: {dex_url}"
+                                        )
+                                        send_alert(alert_message)
+
+                            else:
+                                logging.info(f"⚠️ Program Interaction Detected: {wallet} in TX {tx['signature']}")
 
         except Exception as e:
             logging.error(f"Transaction monitoring error: {str(e)}")
 
-        time.sleep(config.config["check_intervals"]["transactions"])
+
+        time.sleep(config.check_intervals["transactions"])
+
 
 
 def monitor_market_cap(initial_price, total_supply, config):
@@ -586,7 +641,7 @@ def monitor_market_cap(initial_price, total_supply, config):
             abs((current_market_cap - initial_market_cap) / initial_market_cap) * 100
         )
 
-        if market_cap_change > config.config["market_cap_change_threshold"]:
+        if market_cap_change > config.market_cap_change_threshold:
             send_alert(
                 f"📊 Market Cap Alert:\n"
                 f"Change: {market_cap_change:.2f}%\n"
@@ -594,7 +649,7 @@ def monitor_market_cap(initial_price, total_supply, config):
                 f"Current Price: ${current_price:,.6f}"
             )
 
-        time.sleep(config.config["check_intervals"]["market_cap"])
+        time.sleep(config.check_intervals["market_cap"])
 
 
 # Main function
@@ -612,7 +667,7 @@ def main():
 
     print("\n🔎 Initial Token Analysis:")
     print(f"🪙 Token: {TOKEN_ADDRESS}")
-    print(f"💰 Current Price: ${initial_data['price']}")
+    print(f"💰 Current Price: ${initial_data['price']:.6f}")
     print(f"💧 Liquidity: ${initial_data['liquidity']}")
     print(f"📊 Market Cap: ${initial_data['market_cap']}")
     print(f"📈 Total Supply: {initial_data['total_supply']}")
@@ -626,7 +681,7 @@ def main():
     print(f"🔗 DexScreener: {dex_url}")
 
     monitor_threads.add_thread(monitor_price, (initial_data["price"], config))
-    monitor_threads.add_thread(monitor_liquidity, (initial_data["liquidity"], config))
+    monitor_threads.add_thread(monitor_liquidity, (TOKEN_ADDRESS, config))
     monitor_threads.add_thread(monitor_whales, (initial_data["total_supply"], config))
     monitor_threads.add_thread(
         monitor_transactions, (initial_data["total_supply"], config)

@@ -14,6 +14,30 @@ DATA_FOLDER = (
     Path(__file__).parent.parent.parent / "data" / "sniper_agent"
 )  # Adjusted path
 
+##########################################################################
+# DEGEN PLAY SETTINGS:
+#
+# LIQUIDITY > 10000
+# MIN MKT CAP 100000
+# 24H VOLUME > 500000
+# MAX AGE < 12
+#
+# MIDDLE RISK PLAY SETTINGS:
+# 
+# LIQUIDITY > 100000
+# MIN MKT CAP 1000000
+# 24H VOLUME > 5000000
+# MIN AGE < 150MINS(2.5HRS)
+# 
+# LOW RISK PLAY SETTINGS:
+#
+# LIQUIDITY > 100000
+# MIN MKT CAP 5000000
+# 24H VOLUME > 15000000
+# MIN AGE < 1800MINS(30HRS)
+#
+##########################################################################
+
 # Analysis Constants
 CHECK_INTERVAL = 600  # 5 minutes between each analysis run
 MIN_MARKET_CAP = 1000  # Minimum market cap in USD

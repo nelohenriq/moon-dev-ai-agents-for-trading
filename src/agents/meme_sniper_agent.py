@@ -464,7 +464,7 @@ def get_new_token_mints():
     for tx in transactions:
         sig = tx["signature"]
 
-        if tx["blockTime"] < one_hour_ago:
+        if tx["blockTime"] > one_hour_ago:
             break  # Stop processing if we've reached transactions older than one hour
 
         if sig in seen_transactions:  # Avoid duplicate processing
@@ -603,8 +603,15 @@ def save_analyzed_tokens_to_csv(tokens, file_path):
         token_address = token.get(
             "token_address", "N/A"
         )  # Ensure token address is included
+
         dex_screener_link = (
             f"https://dexscreener.com/solana/{token_address}"
+            if token_address != "N/A"
+            else "N/A"
+        )
+
+        axiom_trade_link = (
+            f"https://axiom.trade/meme/{token_address}"
             if token_address != "N/A"
             else "N/A"
         )
@@ -627,11 +634,12 @@ def save_analyzed_tokens_to_csv(tokens, file_path):
             "dex": token.get("dex", "Unknown"),
             "token_address": token_address,
             "dex_screener": dex_screener_link,
+            "axiom_trade": axiom_trade_link,
             "social_links": ", ".join(
                 [
                     s["url"]
                     for s in token.get("social_links", [])
-                    if "url" in s and s["url"] and "dexscreener" not in s["url"]
+                    if "url" in s and s["url"] and "dexscreener" not in s["url"] and "axiom.trade" not in s["url"]
                 ]
             )
             or "N/A",

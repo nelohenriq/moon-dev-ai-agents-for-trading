@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-TOKEN_ADDRESS = "EduXDgsTfkNDVCdwJcqgfpnuzMx4m6BRk9NUmgK8Y9z1"
+TOKEN_ADDRESS = "DZaBTefhyzqdaNX6FyGAyUwpAAEeZeXgqw5FsHTkDciA"
 DEXSCREENER_API = os.getenv("DEXSCREENER_API")
 RPC_ENDPOINT = os.getenv("RPC_ENDPOINT")
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -365,7 +365,8 @@ def get_creator_tokens(authority_address):
                         "top_10_holders_pct": top_10_percentage,
                     }
                 )
-
+        else:
+            print(f"No Raydium pairs found for token {token_address}")
     return raydium_tokens
 
 def check_if_program(address):

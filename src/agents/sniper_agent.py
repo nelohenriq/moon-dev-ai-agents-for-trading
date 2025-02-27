@@ -34,7 +34,7 @@ logging.getLogger().setLevel(logging.WARNING)
 console = Console()
 
 # Constants
-PAST_TOKENS_TO_SHOW = 30  # Number of past token launches to display
+PAST_TOKENS_TO_SHOW = 10  # Number of past token launches to display
 CHECK_INTERVAL = 10  # Seconds between each check for new launches
 DISPLAY_DELAY = 0.5  # Seconds between displaying each token
 ANIMATION_DURATION = 10  # Seconds to show attention-grabbing animation
